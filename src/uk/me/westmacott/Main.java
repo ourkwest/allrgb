@@ -3,8 +3,8 @@ package uk.me.westmacott;
 import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -17,21 +17,42 @@ public class Main {
     static final int PIXEL_COUNT = COLOUR_CUBE_SIZE * COLOUR_CUBE_SIZE * COLOUR_CUBE_SIZE;
     public static final int UNSET = -1;
 
+
+    /*
+
+
+2%, List: 7952, Elapsed: 1 Minute, Remaining: 44 Minutes, Snapshot: 0
+3%, List: 11673, Elapsed: 2 Minutes, Remaining: 57 Minutes, Snapshot: 1
+4%, List: 14376, Elapsed: 3 Minutes, Remaining: 1 Hour, Snapshot: 2
+4%, List: 18664, Elapsed: 4 Minutes, Remaining: 1 Hour, Snapshot: 3
+5%, List: 20864, Elapsed: 5 Minutes, Remaining: 1 Hour, Snapshot: 4
+5%, List: 23238, Elapsed: 6 Minutes, Remaining: 1 Hour, Snapshot: 5
+
+    */
+
     public static void main(String[] args) throws IOException {
 
 
         // 1. Create a randomly sorted list of all the colours.
         // 2. Starting from a random seed, add the colours one by one in the 'best' place.
 
-        System.out.println("Generating colours...");
-        List<Integer> allColoursAsIntegers = IntStream.range(0, PIXEL_COUNT).mapToObj(i -> i).collect(Collectors.toList());
 
-        System.out.println("Arranging colours...");
-        Collections.shuffle(allColoursAsIntegers);
-        Collections.sort(allColoursAsIntegers, (c1, c2) -> getHue(c1) - getHue(c2));
+        int[] allColours;
 
-        System.out.println("Unboxing colours...");
-        final int[] allColours = allColoursAsIntegers.stream().mapToInt(i -> i).toArray();
+        try {
+            FileInputStream fis = new FileInputStream("allColours.data");
+            ObjectInputStream iis = new ObjectInputStream(fis);
+            allColours = (int[]) iis.readObject();
+            System.out.println("Loaded all colours");
+        }
+        catch (Exception e) {
+            allColours = getAllColours();
+            FileOutputStream fos = new FileOutputStream("allColours.data");
+            ObjectOutputStream oos = new ObjectOutputStream(fos);
+            oos.writeObject(allColours);
+            System.out.println("Wrote all colours to file.");
+        }
+
 
         final int[][] data = new int[IMAGE_SIZE][IMAGE_SIZE];
         for (int i = 0; i < IMAGE_SIZE; i++) {
@@ -39,20 +60,26 @@ public class Main {
                 data[i][j] = UNSET;
             }
         }
-        final int[][] averages = new int[IMAGE_SIZE][IMAGE_SIZE];
 
 
-        System.out.println(COLOUR_CUBE_SIZE);
-        System.out.println(PIXEL_COUNT);
-        System.out.println(IMAGE_SIZE);
-
-        System.out.println(new Color(allColours[0]));
-        System.out.println(new Color(allColours[1]));
-        System.out.println(new Color(allColours[2]));
+//        Set<Point> available = new HashSet<>();
+//        available.add(new Point(IMAGE_SIZE / 2, IMAGE_SIZE / 2));
+//        final int[][] averages = new int[IMAGE_SIZE][IMAGE_SIZE];
 
 
-        Set<Point> available = new HashSet<>();
-        available.add(new Point(IMAGE_SIZE / 2, IMAGE_SIZE / 2));
+        RgbOctree availableColours = new RgbOctree();
+        HashMap<Integer, LinkedList<Point>> availablePoints = new HashMap<>();
+
+        int seedColour = Color.GRAY.getRGB() & 0xFFFFFF;
+        availableColours.add(seedColour);
+        availablePoints.put(seedColour, new LinkedList<>());
+        availablePoints.get(seedColour).addFirst(new Point(IMAGE_SIZE / 2, IMAGE_SIZE / 2));
+        int[][] averages = new int[IMAGE_SIZE][IMAGE_SIZE];
+        for (int i = 0; i < IMAGE_SIZE; i++) {
+            for (int j = 0; j < IMAGE_SIZE; j++) {
+                averages[i][j] = UNSET;
+            }
+        }
 
 
         // for each sorted colour - find the best place to put it.
@@ -63,22 +90,24 @@ public class Main {
         long remainingTime;
         long elapsedTime;
 
+        System.out.println("Iterating...");
         for (int i = 0; i < PIXEL_COUNT; i++) {
 
             if (i%1000 == 0) {
                 long now = System.currentTimeMillis();
-                if (now > mark + 30_000) {
-                    mark += 30_000;
+                if (now > mark + 60_000) {
+                    mark += 60_000;
 
                     elapsedTime = now - start;
                     remainingTime = (elapsedTime * PIXEL_COUNT / i) - elapsedTime;
                     snapshotNumber%=10;
 
-                    System.out.print("\r" + 0 + "..." + i + "..." + PIXEL_COUNT
-                            + ", List: " + available.size()
+                    System.out.print(
+                            (Math.round((10000.0 * i) / PIXEL_COUNT) / 100) + "%"
+                            + ", List: " + availableColours.size()
                             + ", Elapsed: " + display(elapsedTime)
                             + ", Remaining: " + display(remainingTime)
-                            + ", Snapshot: " + snapshotNumber);
+                            + ", Snapshot: " + snapshotNumber + "\n");
                     spitImage(data, snapshotNumber);
                     snapshotNumber++;
                 }
@@ -86,76 +115,76 @@ public class Main {
 
             int thisColour = allColours[i];
 
-            Point best = null;
 
-            int leastDifference = Integer.MAX_VALUE;
+            int bestColour = availableColours.probablyNearTo(thisColour);
+            LinkedList<Point> pointsForBestColour = availablePoints.get(bestColour);
+            Point bestPoint = pointsForBestColour.removeLast();
+            if (pointsForBestColour.isEmpty()) {
+                availableColours.remove(bestColour);
+                availablePoints.remove(bestColour);
+            }
+            averages[bestPoint.x][bestPoint.y] = UNSET;
 
+            data[bestPoint.x][bestPoint.y] = thisColour;
 
-            for (Point candidate : available) { // could parallelise this?
-                int average = averages[candidate.x][candidate.y];
-                int difference = difference(thisColour, average);
-//                System.out.println("Retrieved " + candidate + " with average " + new Color(average) + " and difference " + difference + " from " + new Color(thisColour));
-                if (difference < leastDifference) {
-                    leastDifference = difference;
-                    best = candidate;
+            for (Point neighbour : neighbours(bestPoint)) {
+                if (data[neighbour.x][neighbour.y] == UNSET) {
+
+                    int currentAverage = averages[neighbour.x][neighbour.y];
+                    if (currentAverage != UNSET) {
+                        LinkedList<Point> pointsForCurrentAverage = availablePoints.get(currentAverage);
+                        pointsForCurrentAverage.remove(neighbour);
+                        if (pointsForCurrentAverage.isEmpty()) {
+                            availableColours.remove(currentAverage);
+                            availablePoints.remove(currentAverage);
+                        }
+                    }
+
+                    int newAverage = averageColour(neighbours(neighbour), data);
+                    availableColours.add(newAverage);
+                    availablePoints.computeIfAbsent(newAverage, key -> new LinkedList()).addFirst(neighbour);
+                    averages[neighbour.x][neighbour.y] = newAverage;
                 }
             }
 
-//            if (i%2 == 0) {
-//                int leastDifference = Integer.MAX_VALUE;
-//                for (Point candidate : available) {
-//                    int difference = 0;
-//                    int neighbourCount = 0;
-//                    for (Point neighbour : neighbours(candidate)) {
-//                        int neighbourColour = data[neighbour.x][neighbour.y];
-//                        if (neighbourColour != UNSET) {
-//                            difference += difference(thisColour, neighbourColour);
-//                            neighbourCount++;
-//                        }
-//                    }
-//                    if (neighbourCount > 0) {
-//                        difference /= neighbourCount;
-//                    }
-//                    if (difference < leastDifference) {
-//                        leastDifference = difference;
-//                        best = candidate;
-//                    }
+//            Point best = null;
+//            int leastDifference = Integer.MAX_VALUE;
+//            for (Point candidate : available) { // could parallelise this?
+//                int average = averages[candidate.x][candidate.y];
+//                int difference = difference(thisColour, average);
+//                if (difference < leastDifference) {
+//                    leastDifference = difference;
+//                    best = candidate;
 //                }
-//            } else {
-//                int leastDifference = Integer.MAX_VALUE;
-//                for (Point candidate : available) {
-//                    for (Point neighbour : neighbours(candidate)) {
-//                        int neighbourColour = data[neighbour.x][neighbour.y];
-//                        if (neighbourColour != UNSET) {
-//                            int difference = difference(thisColour, neighbourColour);
-//                            if (difference < leastDifference) {
-//                                leastDifference = difference;
-//                                best = candidate;
-//                            }
-//                        }
+//            }
+//
+//            if (best != null) {
+//                data[best.x][best.y] = thisColour;
+//                available.remove(best);
+//                for (Point neighbour : neighbours(best)) {
+//                    if (data[neighbour.x][neighbour.y] == UNSET) {
+//                        available.add(neighbour);
+//                        averages[neighbour.x][neighbour.y] = averageColour(neighbours(neighbour), data);
 //                    }
 //                }
 //            }
-
-            if (best != null) {
-                data[best.x][best.y] = thisColour;
-                available.remove(best);
-                for (Point neighbour : neighbours(best)) {
-                    if (data[neighbour.x][neighbour.y] == UNSET) {
-                        available.add(neighbour);
-                        averages[neighbour.x][neighbour.y] = averageColour(neighbours(neighbour), data);
-//                        System.out.println("Adding " + neighbour + " with average " + new Color(average));
-                    }
-                }
-            }
         }
 
-        spitImage(data, "final");
-        
-        // 17000 - 25 hours
 
+        spitImage(data, "final");
     }
 
+    private static int[] getAllColours() {
+        System.out.println("Generating colours...");
+        List<Integer> allColoursAsIntegers = IntStream.range(0, PIXEL_COUNT).mapToObj(i -> i).collect(Collectors.toList());
+
+        System.out.println("Arranging colours...");
+        Collections.shuffle(allColoursAsIntegers);
+        Collections.sort(allColoursAsIntegers, (c1, c2) -> getHue(c1) - getHue(c2));
+
+        System.out.println("Unboxing colours...");
+        return allColoursAsIntegers.stream().mapToInt(i -> i).toArray();
+    }
 
 
     private static int averageColour(List<Point> neighbours, int[][] data) {
@@ -178,6 +207,7 @@ public class Main {
         return (red << 16) | (grn << 8) | blu;
     }
 
+    private static String TODAY = java.time.LocalDate.now().format(DateTimeFormatter.ISO_DATE);
     private static void spitImage(int[][] data, Object snapshotNumber) throws IOException {
         BufferedImage image = new BufferedImage(IMAGE_SIZE, IMAGE_SIZE, BufferedImage.TYPE_INT_RGB);
         for (int x = 0; x < IMAGE_SIZE; x++) {
@@ -185,7 +215,7 @@ public class Main {
                 image.setRGB(x, y, data[x][y]);
             }
         }
-        String filename = "snapshot-" + snapshotNumber;
+        String filename = TODAY + "-snapshot-" + snapshotNumber;
         ImageIO.write(image, "png", new File("./" + filename + ".png"));
     }
 

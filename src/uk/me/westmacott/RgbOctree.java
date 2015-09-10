@@ -31,11 +31,12 @@ public class RgbOctree {
 
     int colourCount = 8 * 8 * 8 * 8 * 8 * 8 * 8 * 8;
 
-//    int[][] counts = new int[][]{null, null, null, null, null, null, null, null};
-    int[][] counts = new int[8][];
+    //    int[][] counts = new int[][]{null, null, null, null, null, null, null, null};
+    static int DEPTH = 9;
+    int[][] counts = new int[DEPTH][];
     {
         int size = 1;
-        for (int depth = 0; depth < 8; depth++) {
+        for (int depth = 0; depth < DEPTH; depth++) {
             counts[depth] = new int[size];
             size *= 8;
         }
@@ -43,24 +44,14 @@ public class RgbOctree {
     }
 
     public static final int UNSET = -1;
-    int[] colours = new int[colourCount];
+    int[] indexByRgb = new int[colourCount];
+    int[] rgbByIndex = new int[colourCount];
     {
-        Arrays.fill(colours, UNSET);
+        Arrays.fill(indexByRgb, UNSET);
+        Arrays.fill(rgbByIndex, UNSET);
     }
 
 
-    void mapToIndex(int depth0, int index0, int r, int g, int b) {
-
-        int depth1 = depth0 + 1;
-
-        int mask = 0b10000000 >> depth0;
-        int index1 =
-                8 * index0
-                        + (r & mask)
-                        + 2 * (g & mask)
-                        + 4 * (b & mask);
-
-    }
 
 //    private static int getOctant(int r, int g, int b) {
 //        int red = (0xFF0000 & colourA) > (0xFF0000 & colourB) ? 1 : 0;
@@ -82,35 +73,63 @@ public class RgbOctree {
     }
 
     void add(int rgb) {
+        if (indexByRgb[rgb] == UNSET) {
+            int r = (rgb >> 16) & 0xFF;
+            int g = (rgb >> 8) & 0xFF;
+            int b = rgb & 0xFF;
+            int index = 0;
+            for (int depth = 0; depth < DEPTH; depth++) {
+                int mask = 0b100000000 >> depth;
+                index = 8 * index
+                        + ((r & mask) == 0 ? 0 : 4)
+                        + ((g & mask) == 0 ? 0 : 2)
+                        + ((b & mask) == 0 ? 0 : 1);
+                counts[depth][index]++;
+            }
+            rgbByIndex[index] = rgb;
+            indexByRgb[rgb] = index;
+        }
+    }
+
+    int removeNear(int rgb) {
+        // Can optimise?
+        int nearish = probablyNearTo(rgb);
+        remove(nearish);
+        return nearish;
+    }
+
+    boolean contains(int rgb) {
         int r = (rgb >> 16) & 0xFF;
         int g = (rgb >> 8) & 0xFF;
         int b = rgb & 0xFF;
         int index = 0;
-        for (int depth = 0; depth < 8; depth++) {
-            counts[depth][index]++;
-            int mask = 0b10000000 >> depth;
+        for (int depth = 0; depth < DEPTH; depth++) {
+            int mask = 0b100000000 >> depth;
             index = 8 * index
                     + ((r & mask) == 0 ? 0 : 4)
                     + ((g & mask) == 0 ? 0 : 2)
                     + ((b & mask) == 0 ? 0 : 1);
         }
-        colours[index] = rgb;
+        return counts[8][index] != 0;
     }
 
     void remove(int rgb) {
-        int r = (rgb >> 16) & 0xFF;
-        int g = (rgb >> 8) & 0xFF;
-        int b = rgb & 0xFF;
-        int index = 0;
-        for (int depth = 0; depth < 8; depth++) {
-            counts[depth][index]--;
-            int mask = 0b10000000 >> depth;
-            index = 8 * index
-                    + ((r & mask) == 0 ? 0 : 4)
-                    + ((g & mask) == 0 ? 0 : 2)
-                    + ((b & mask) == 0 ? 0 : 1);
+        if (indexByRgb[rgb] != UNSET) {
+            int r = (rgb >> 16) & 0xFF;
+            int g = (rgb >> 8) & 0xFF;
+            int b = rgb & 0xFF;
+            int index = 0;
+            for (int depth = 0; depth < DEPTH; depth++) {
+                int mask = 0b100000000 >> depth;
+                index = 8 * index
+                        + ((r & mask) == 0 ? 0 : 4)
+                        + ((g & mask) == 0 ? 0 : 2)
+                        + ((b & mask) == 0 ? 0 : 1);
+                counts[depth][index]--;
+            }
+            rgbByIndex[index] = UNSET;
+            indexByRgb[rgb] = UNSET;
         }
-        colours[index] = UNSET;
     }
 
     int probablyNearTo(int rgb) {
@@ -123,14 +142,14 @@ public class RgbOctree {
 
         int index = 0;
         for (int depth = 0; depth < 8; depth++) {
+            int mask = 0b100000000 >> depth;
+            index = 8 * index
+                    + ((r & mask) == 0 ? 0 : 4)
+                    + ((g & mask) == 0 ? 0 : 2)
+                    + ((b & mask) == 0 ? 0 : 1);
             if (counts[depth][index] > 0) {
                 goodIndex = index;
                 goodDepth = depth;
-                int mask = 0b10000000 >> depth;
-                index = 8 * index
-                        + ((r & mask) == 0 ? 0 : 4)
-                        + ((g & mask) == 0 ? 0 : 2)
-                        + ((b & mask) == 0 ? 0 : 1);
             } else {
                 break;
             }
@@ -138,7 +157,7 @@ public class RgbOctree {
 
         int min = goodIndex;
         int max = goodIndex;
-        for (int depth = goodDepth; depth < 8; depth++) {
+        for (int depth = goodDepth + 1; depth < DEPTH; depth++) {
             min = 8 * min;
             max = 8 * max + 7;
         }
@@ -146,11 +165,11 @@ public class RgbOctree {
         int best = 0;
         int leastDistance = Integer.MAX_VALUE;
         for (int i = min; i <= max; i++) {
-            if (colours[i] != UNSET) {
-                int distance = distance(colours[i], rgb);
+            if (rgbByIndex[i] != UNSET) {
+                int distance = distance(rgbByIndex[i], rgb);
                 if (distance < leastDistance) {
                     leastDistance = distance;
-                    best = colours[i];
+                    best = rgbByIndex[i];
                 }
             }
         }

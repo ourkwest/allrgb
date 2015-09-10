@@ -1,8 +1,9 @@
 package uk.me.westmacott;
 
 import java.awt.*;
-import java.util.*;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Random;
+import java.util.Set;
 
 public class RgbOctreeTest {
 
@@ -18,6 +19,38 @@ public class RgbOctreeTest {
 
     public static void main(String[] args) {
 
+
+        RgbOctree testSubject = new RgbOctree();
+
+        int rgb = generateColour();
+        testSubject.add(rgb);
+        testSubject.add(rgb);
+//        testSubject.remove(rgb);
+//        testSubject.remove(rgb);
+
+        for (int i = 0; i < testSubject.colourCount; i++) {
+            if (testSubject.rgbByIndex[i] != -1) {
+                System.out.println("testSubject.colours["+i+"] = " + testSubject.rgbByIndex[i]);
+            }
+        }
+
+        System.out.println("Depth: " + testSubject.counts.length);
+
+        int size = 1;
+        for (int depth = 0; depth < RgbOctree.DEPTH; depth++) {
+
+            System.out.println("Length: " + testSubject.counts[depth].length);
+
+            for (int i = 0; i < size; i++) {
+                if (testSubject.counts[depth][i] != 0) {
+                    System.out.println("testSubject.counts["+depth+"]["+i+"] = " + testSubject.counts[depth][i]);
+                }
+            }
+            size *= 8;
+        }
+
+
+
 //        System.out.println("Distance: " + distance(0, 0, 0, 3, 4, 0));
 
 
@@ -28,7 +61,7 @@ public class RgbOctreeTest {
 //        tree.add(new Color(255, 1, 0).getRGB());
 
         RgbOctree tree = new RgbOctree();
-        colours = new LinkedList<>();
+        colours = new HashSet<>();
 
         Set<Integer> doubleCheck = new HashSet<>();
 
@@ -43,7 +76,7 @@ public class RgbOctreeTest {
         for (int j = 0; j < 10000; j++) {
 
             for (int i = 0; i < 10; i++) {
-                int aColour = colours.get(0);
+                int aColour = colours.iterator().next();
                 remove(aColour);
                 tree.remove(aColour);
                 doubleCheck.remove(aColour);
@@ -127,12 +160,12 @@ public class RgbOctreeTest {
     }
 
 
-    static List<Integer> colours;
+    static HashSet<Integer> colours;
     static void add(int colour) {
         colours.add(colour);
     }
     static void remove(int colour) {
-        colours.remove(colours.indexOf(colour));
+        colours.remove(colour);
     }
     static int nearestTo(int colour) {
         int best = 0;
