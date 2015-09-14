@@ -132,9 +132,9 @@ public class Main {
 
 
 //            int bestColour = availableColours.probablyNearTo(thisColour);
-            int bestColour = availableColours.nearestTo(thisColour);
+            int bestColour = availableColours.probablyNearTo2(thisColour);
             Point bestPoint;
-            try {
+            try { // TODO: this is unnecessary
                 LinkedList<Point> pointsForBestColour = availablePoints.get(bestColour);
                 bestPoint = pointsForBestColour.removeLast();
                 if (pointsForBestColour.isEmpty()) {
@@ -198,13 +198,14 @@ public class Main {
 //            }
         }
 
-
+        // TODO: better ending message!
         spitImage(data, "final");
         System.out.println("Earliest Substitution: " + earliestSubstitution);
         System.out.println("Latest Substitution: " + latestSubstitution);
     }
 
     private static int[] getAllColours() {
+        // TODO: interleave data from travelling in both directions to improve ending pathology? (and change output image)
         System.out.println("Generating colours...");
         List<Integer> allColoursAsIntegers = IntStream.range(0, PIXEL_COUNT).mapToObj(i -> i).collect(Collectors.toList());
 

@@ -187,6 +187,60 @@ public class RgbOctree {
         return best;
     }
 
+    int probablyNearTo2(int rgb) {
+
+        int r = (rgb >> 16) & 0xFF;
+        int g = (rgb >> 8) & 0xFF;
+        int b = rgb & 0xFF;
+
+        int goodIndex = 0, goodDepth = 0;
+
+        int index = 0;
+        for (int depth = 0; depth < 8; depth++) {
+            int mask = 0b100000000 >> depth;
+            index = 8 * index
+                    + ((r & mask) == 0 ? 0 : 4)
+                    + ((g & mask) == 0 ? 0 : 2)
+                    + ((b & mask) == 0 ? 0 : 1);
+            if (counts[depth][index] > 0) {
+                goodIndex = index;
+                goodDepth = depth;
+            } else {
+                break;
+            }
+        }
+
+        int[] bestAndLeast = new int[]{-1, Integer.MAX_VALUE};
+        findBest(bestAndLeast, goodDepth, goodIndex, r, g, b);
+        return bestAndLeast[0];
+    }
+
+    void findBest(int[] bestAndLeast, int depth, int index, int r, int g, int b) {
+
+        try {
+            if (counts[depth][index] == 0) {
+                return;
+            }
+        }catch (IndexOutOfBoundsException e) {
+            System.out.println("Best: " + Arrays.toString(bestAndLeast) + ", " + depth + ", " + index);
+        }
+
+        if (depth == DEPTH - 1) {
+            int colour = rgbByIndex[index];
+            int distance = distance(colour, r, g, b);
+            if (distance < bestAndLeast[1]) {
+                bestAndLeast[0] = colour;
+                bestAndLeast[1] = distance;
+            }
+            return;
+        }
+        depth += 1;
+        index *= 8;
+        for (int i = 0; i < 8; i++) {
+            findBest(bestAndLeast, depth, index + i, r, g, b);
+        }
+    }
+
     int nearestTo(int rgb) {
 
         int r = (rgb >> 16) & 0xFF;

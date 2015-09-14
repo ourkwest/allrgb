@@ -11,10 +11,13 @@ public class RgbOctreeTest {
     static long timeA = 0;
     static long timeB = 0;
     static long timeC = 0;
+    static long timeD = 0;
     static long matchesB = 0;
     static long matchesC = 0;
+    static long matchesD = 0;
     static long failsB = 0;
     static long failsC = 0;
+    static long failsD = 0;
 
     static double totalErrorB = 0;
     static double minErrorB = Integer.MAX_VALUE;
@@ -22,6 +25,9 @@ public class RgbOctreeTest {
     static double totalErrorC = 0;
     static double minErrorC = Integer.MAX_VALUE;
     static double maxErrorC = Integer.MIN_VALUE;
+    static double totalErrorD = 0;
+    static double minErrorD = Integer.MAX_VALUE;
+    static double maxErrorD = Integer.MIN_VALUE;
 
     public static void main(String[] args) {
 
@@ -69,6 +75,7 @@ public class RgbOctreeTest {
 
         RgbOctree tree1 = new RgbOctree();
         RgbOctree tree2 = new RgbOctree();
+        RgbOctree tree3 = new RgbOctree();
         colours = new HashSet<>();
 //        tree2.showDebugPane();
 
@@ -78,35 +85,40 @@ public class RgbOctreeTest {
             int x = generateColour();
             tree1.add(x);
             tree2.add(x);
+            tree3.add(x);
             add(x);
 //            doubleCheck.add(x);
         }
         System.out.println("Initial sizes: " + colours.size() + " / " + tree1.size() + " / " + tree2.size());
 
-        for (int j = 0; j < 10000; j++) {
+        int target = generateColour();
 
-            for (int i = 0; i < 10; i++) {
-                Object[] array = colours.toArray();
-                int aColour = (Integer)array[random.nextInt(array.length)];
-                remove(aColour);
-                tree1.remove(aColour);
-                tree2.remove(aColour);
+        for (int j = 0; j < 2500; j++) {
 
-                if (colours.size() != tree1.size()) {
-                    System.out.println("Sizes: " + colours.size() + " / " + tree1.size() + " / " + tree2.size());
-                }
+//            for (int i = 0; i < 10; i++) {
+//                Object[] array = colours.toArray();
+//                int aColour = (Integer)array[random.nextInt(array.length)];
+//                remove(aColour);
+//                tree1.remove(aColour);
+//                tree2.remove(aColour);
+//                tree3.remove(aColour);
+//
+//                if (colours.size() != tree1.size()) {
+//                    System.out.println("Sizes: " + colours.size() + " / " + tree1.size() + " / " + tree2.size());
+//                }
+//
+//                int x = generateColour();
+//                tree1.add(x);
+//                tree2.add(x);
+//                tree3.add(x);
+//                add(x);
+//
+//                if (colours.size() != tree1.size()) {
+//                    System.out.println("Sizes: " + colours.size() + " / " + tree1.size() + " / " + tree2.size());
+//                }
+//            }
 
-                int x = generateColour();
-                tree1.add(x);
-                tree2.add(x);
-                add(x);
 
-                if (colours.size() != tree1.size()) {
-                    System.out.println("Sizes: " + colours.size() + " / " + tree1.size() + " / " + tree2.size());
-                }
-            }
-
-            int target = generateColour();
 
             long a = System.currentTimeMillis();
             int resultA = nearestTo(target);
@@ -115,36 +127,18 @@ public class RgbOctreeTest {
             long c = System.currentTimeMillis();
             int resultC = tree2.nearestTo(target);
             long d = System.currentTimeMillis();
-
-
-            if (resultB != resultA) {
-
-                double distanceA = distance(resultA, target);
-                double distanceB = distance(resultB, target);
-                double distanceC = distance(resultC, target);
-                double deltaB = distanceB - distanceA;
-                double deltaC = distanceC - distanceA;
-
-                if (deltaB > deltaC) {
-//                    System.out.println("C wins");
-                } else if (deltaC > deltaB) {
-//                    System.out.println("B wins");
-
-                    int resultB2 = tree1.probablyNearTo(target);
-                    int resultC2 = tree2.nearestTo(target);
-
-                    Integer.toString(resultB2 + resultC2);
-
-                } else {
-//                    System.out.println("Draw");
-                }
-
-            }
-
+            int resultD = tree3.probablyNearTo2(target);
+            long e = System.currentTimeMillis();
 
             timeA += (b - a);
             timeB += (c - b);
             timeC += (d - c);
+            timeD += (e - d);
+
+            remove(resultA);
+            tree1.remove(resultB);
+            tree2.remove(resultC);
+            tree3.remove(resultD);
 
             if (resultA == resultB) {
                 matchesB++;
@@ -155,18 +149,17 @@ public class RgbOctreeTest {
                 double distanceB = distance(resultB, target);
                 double difference = distanceB - distanceA;
 
-                if (difference < 0) {
-                    System.out.println();
-                    System.out.println("DIFF!!!");
-                    System.out.println("target  = " + new Color(target));
-                    System.out.println("resultA = " + new Color(resultA));
-                    System.out.println("resultB = " + new Color(resultB));
-                    System.out.println("distA   = " + distanceA);
-                    System.out.println("distB   = " + distanceB);
-                    System.out.println("diff    = " + difference);
-                    System.out.println(colours.contains(resultA));
-//                    System.out.println(doubleCheck.contains(result1));
-                }
+//                if (difference < 0) {
+//                    System.out.println();
+//                    System.out.println("DIFF!!!");
+//                    System.out.println("target  = " + new Color(target));
+//                    System.out.println("resultA = " + new Color(resultA));
+//                    System.out.println("resultB = " + new Color(resultB));
+//                    System.out.println("distA   = " + distanceA);
+//                    System.out.println("distB   = " + distanceB);
+//                    System.out.println("diff    = " + difference);
+//                    System.out.println(colours.contains(resultA));
+//                }
 
                 if (difference == 0) {
                     matchesB++;
@@ -188,18 +181,17 @@ public class RgbOctreeTest {
                 double distanceC = distance(resultC, target);
                 double difference = distanceC - distanceA;
 
-                if (difference < 0) {
-                    System.out.println();
-                    System.out.println("DIFF!!!");
-                    System.out.println("target  = " + new Color(target));
-                    System.out.println("resultA = " + new Color(resultA));
-                    System.out.println("resultC = " + new Color(resultC));
-                    System.out.println("distA   = " + distanceA);
-                    System.out.println("distC   = " + distanceC);
-                    System.out.println("diff    = " + difference);
-                    System.out.println(colours.contains(resultA));
-//                    System.out.println(doubleCheck.contains(result1));
-                }
+//                if (difference < 0) {
+//                    System.out.println();
+//                    System.out.println("DIFF!!!");
+//                    System.out.println("target  = " + new Color(target));
+//                    System.out.println("resultA = " + new Color(resultA));
+//                    System.out.println("resultC = " + new Color(resultC));
+//                    System.out.println("distA   = " + distanceA);
+//                    System.out.println("distC   = " + distanceC);
+//                    System.out.println("diff    = " + difference);
+//                    System.out.println(colours.contains(resultA));
+//                }
 
                 if (difference == 0) {
                     matchesC++;
@@ -212,20 +204,60 @@ public class RgbOctreeTest {
                 }
             }
 
+            if (resultA == resultD) {
+                matchesD++;
+            }
+            else {
+
+                double distanceA = distance(resultA, target);
+                double distanceD = distance(resultD, target);
+                double difference = distanceD - distanceA;
+
+//                if (difference < 0) {
+//                    System.out.println();
+//                    System.out.println("DIFF!!!");
+//                    System.out.println("target  = " + new Color(target));
+//                    System.out.println("resultA = " + new Color(resultA));
+//                    System.out.println("resultD = " + new Color(resultD));
+//                    System.out.println("distA   = " + distanceA);
+//                    System.out.println("distD   = " + distanceD);
+//                    System.out.println("diff    = " + difference);
+//                    System.out.println(colours.contains(resultA));
+//                }
+
+                if (difference == 0) {
+                    matchesD++;
+                }
+                else {
+                    totalErrorD += difference;
+                    minErrorD = Math.min(minErrorD, difference);
+                    maxErrorD = Math.max(maxErrorD, difference);
+                    failsD++;
+                }
+            }
+
             System.out.print("\r" + j);
         }
 
         System.out.println();
         
         System.out.println("TryAll: " + Main.display(timeA));
+        System.out.println();
 
         System.out.println("Octree approx.: " + Main.display(timeB) + " Success: " + ((matchesB * 100.0) / (matchesB + failsB)) + "% (" + matchesB + " : " + failsB + ")");
         System.out.println("Average Error: " + (totalErrorB / failsB));
         System.out.println("Max / Min : " + maxErrorB + " / " + minErrorB);
+        System.out.println();
 
         System.out.println("Octree exact.: " + Main.display(timeC) + " Success: " + ((matchesC * 100.0) / (matchesC + failsC)) + "% (" + matchesC + " : " + failsC + ")");
         System.out.println("Average Error: " + (totalErrorC / failsC));
         System.out.println("Max / Min : " + maxErrorC + " / " + minErrorC);
+        System.out.println();
+
+        System.out.println("Octree approx2.: " + Main.display(timeD) + " Success: " + ((matchesD * 100.0) / (matchesD + failsD)) + "% (" + matchesD + " : " + failsD + ")");
+        System.out.println("Average Error: " + (totalErrorD / failsD));
+        System.out.println("Max / Min : " + maxErrorD + " / " + minErrorD);
+        System.out.println();
 
     }
 
