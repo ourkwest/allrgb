@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+// Mountains and lettuce leaves and lightning and space.
 public class Main {
 
     static final int COLOUR_CUBE_SIZE = 256;
@@ -28,6 +29,7 @@ public class Main {
 5%, List: 20864, Elapsed: 5 Minutes, Remaining: 1 Hour, Snapshot: 4
 5%, List: 23238, Elapsed: 6 Minutes, Remaining: 1 Hour, Snapshot: 5
 
+57%, Available: 200360 / 200360, Elapsed: 1.00  Minutes, Remaining: 44.72  Seconds, Snapshot: 0
     */
 
     public static void main(String[] args) throws IOException {
@@ -70,6 +72,8 @@ public class Main {
         RgbOctree availableColours = new RgbOctree();
         HashMap<Integer, LinkedList<Point>> availablePoints = new HashMap<>();
 
+        availableColours.showDebugPane();
+
         int seedColour = Color.GRAY.getRGB() & 0xFFFFFF;
         availableColours.add(seedColour);
         availablePoints.put(seedColour, new LinkedList<>());
@@ -89,14 +93,24 @@ public class Main {
         long mark = start;
         long remainingTime;
         long elapsedTime;
+        int lastI = 0;
+        int progressThisChunk;
+
+        int earliestSubstitution = -1, latestSubstitution = -1;
 
         System.out.println("Iterating...");
         for (int i = 0; i < PIXEL_COUNT; i++) {
 
             if (i%1000 == 0) {
+
+//                availableColours.debugToScreen(i);
+
                 long now = System.currentTimeMillis();
                 if (now > mark + 60_000) {
                     mark += 60_000;
+
+                    progressThisChunk = i - lastI;
+                    lastI = i;
 
                     elapsedTime = now - start;
                     remainingTime = (elapsedTime * PIXEL_COUNT / i) - elapsedTime;
@@ -104,11 +118,12 @@ public class Main {
 
                     System.out.print(
                             (Math.round((10000.0 * i) / PIXEL_COUNT) / 100) + "%"
-                            + ", List: " + availableColours.size()
-                            + ", Elapsed: " + display(elapsedTime)
-                            + ", Remaining: " + display(remainingTime)
-                            + ", Snapshot: " + snapshotNumber + "\n");
+                                    + ", Available: " + availableColours.size() + " / " + availablePoints.size()
+                                    + ", Elapsed: " + display(elapsedTime)
+                                    + ", Remaining: " + display(remainingTime) + " or " + ((PIXEL_COUNT - i) / progressThisChunk) + " Minutes"
+                                    + ", Snapshot: " + snapshotNumber + "\n");
                     spitImage(data, snapshotNumber);
+//                    availableColours.debugToFile("octree-" + snapshotNumber);
                     snapshotNumber++;
                 }
             }
@@ -116,14 +131,27 @@ public class Main {
             int thisColour = allColours[i];
 
 
-            int bestColour = availableColours.probablyNearTo(thisColour);
-            LinkedList<Point> pointsForBestColour = availablePoints.get(bestColour);
-            Point bestPoint = pointsForBestColour.removeLast();
-            if (pointsForBestColour.isEmpty()) {
-                availableColours.remove(bestColour);
-                availablePoints.remove(bestColour);
+//            int bestColour = availableColours.probablyNearTo(thisColour);
+            int bestColour = availableColours.nearestTo(thisColour);
+            Point bestPoint;
+            try {
+                LinkedList<Point> pointsForBestColour = availablePoints.get(bestColour);
+                bestPoint = pointsForBestColour.removeLast();
+                if (pointsForBestColour.isEmpty()) {
+                    availableColours.remove(bestColour);
+                    availablePoints.remove(bestColour);
+                }
+                averages[bestPoint.x][bestPoint.y] = UNSET;
             }
-            averages[bestPoint.x][bestPoint.y] = UNSET;
+            catch (NullPointerException e) {
+
+                latestSubstitution = i;
+                if (earliestSubstitution == -1) {
+                    earliestSubstitution = i;
+                }
+
+                bestPoint = new Point(IMAGE_SIZE / 2, IMAGE_SIZE / 2);
+            }
 
             data[bestPoint.x][bestPoint.y] = thisColour;
 
@@ -172,6 +200,8 @@ public class Main {
 
 
         spitImage(data, "final");
+        System.out.println("Earliest Substitution: " + earliestSubstitution);
+        System.out.println("Latest Substitution: " + latestSubstitution);
     }
 
     private static int[] getAllColours() {
@@ -248,7 +278,7 @@ public class Main {
         for (int i = 0; i < neighbours.length; i++) {
             int x = input.x + neighbours[i].x;
             int y = input.y + neighbours[i].y;
-            if (0 < x && x < IMAGE_SIZE && 0 < y && y < IMAGE_SIZE) {
+            if (0 <= x && x < IMAGE_SIZE && 0 <= y && y < IMAGE_SIZE) {
                 output.add(new Point(x, y));
             }
         }
@@ -285,23 +315,23 @@ public class Main {
     }
 
     public static String display(long millis) {
-        long duration = millis;
-        String unit = " Millisecond";
+        double duration = millis;
+        String unit = "Millisecond";
         if (duration >= 1000) {
             duration /= 1000;
-            unit = " Second";
+            unit = "Second";
             if (duration >= 60) {
                 duration /= 60;
-                unit = " Minute";
+                unit = "Minute";
                 if (duration >= 60) {
                     duration /= 60;
-                    unit = " Hour";
+                    unit = "Hour";
                 }
             }
         }
         if (duration > 1) {
             unit += "s";
         }
-        return duration + unit;
+        return String.format("%4.2f %s", duration, unit);
     }
 }
