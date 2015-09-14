@@ -42,14 +42,14 @@ public class Main {
         int[] allColours;
 
         try {
-            FileInputStream fis = new FileInputStream("allColours.data");
+            FileInputStream fis = new FileInputStream("allColoursInterleaved.data");
             ObjectInputStream iis = new ObjectInputStream(fis);
             allColours = (int[]) iis.readObject();
             System.out.println("Loaded all colours");
         }
         catch (Exception e) {
             allColours = getAllColours();
-            FileOutputStream fos = new FileOutputStream("allColours.data");
+            FileOutputStream fos = new FileOutputStream("allColoursInterleaved.data");
             ObjectOutputStream oos = new ObjectOutputStream(fos);
             oos.writeObject(allColours);
             System.out.println("Wrote all colours to file.");
@@ -214,7 +214,19 @@ public class Main {
         Collections.sort(allColoursAsIntegers, (c1, c2) -> getHue(c1) - getHue(c2));
 
         System.out.println("Unboxing colours...");
-        return allColoursAsIntegers.stream().mapToInt(i -> i).toArray();
+        int[] primitiveArray = allColoursAsIntegers.stream().mapToInt(i -> i).toArray();
+
+        System.out.println("Interleaving colours...");
+        int[] interleaved = new int[PIXEL_COUNT];
+        int i = 0;
+        int j = PIXEL_COUNT - 1;
+        int k = 0;
+        while (k < (PIXEL_COUNT - 3)) {
+            interleaved[k++] = primitiveArray[i++];
+            interleaved[k++] = primitiveArray[j--];
+        }
+        System.out.println(i + " - " + j + " - " + k);
+        return interleaved;
     }
 
 
@@ -246,7 +258,7 @@ public class Main {
                 image.setRGB(x, y, data[x][y]);
             }
         }
-        String filename = TODAY + "-snapshot-" + snapshotNumber;
+        String filename = TODAY + "-snapshot-1-" + snapshotNumber;
         ImageIO.write(image, "png", new File("./" + filename + ".png"));
     }
 
