@@ -501,9 +501,9 @@ public class RgbOctree {
 
     public static int distance(int red1, int green1, int blue1, int red2, int green2, int blue2) {
 
-//        return (int) RgbOctreeTest.distance(red1, green1, blue1, red2, green2, blue2);
+        return (int) RgbOctreeTest.distance(red1, green1, blue1, red2, green2, blue2);
 
-        return Math.abs(red1 - red2) + Math.abs(green1 - green2) + Math.abs(blue1 - blue2);
+//        return Math.abs(red1 - red2) + Math.abs(green1 - green2) + Math.abs(blue1 - blue2);
 
 //        int dr = red1 - red2;
 //        int dg = green1 - green2;
