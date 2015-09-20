@@ -60,4 +60,28 @@ public class Data {
         return data;
     }
 
+    public static int[] newArray(int initialValue, int size) {
+        int[] result = new int[size];
+        for (int i = 0; i < size; i++) {
+            result[i] = initialValue;
+        }
+        return result;
+    }
+
+    public static int[][] newArray(int initialValue, int size0, int size1) {
+        int[][] result = new int[size0][size1];
+        for (int i = 0; i < size0; i++) {
+            result[i] = newArray(initialValue, size1);
+        }
+        return result;
+    }
+
+    public static int[][][] newArray(int initialValue, int size0, int size1, int size2) {
+        int[][][] result = new int[size0][size1][size2];
+        for (int i = 0; i < size0; i++) {
+            result[i] = newArray(initialValue, size1, size2);
+        }
+        return result;
+    }
+
 }

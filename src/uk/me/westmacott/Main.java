@@ -6,7 +6,6 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -21,39 +20,42 @@ public class Main {
     static final int UNSET = -1;
 
     static final int NUMBER = Data.readAndWrite("Number", () -> 0, i -> i++);
+    public static final double TAU = 2.0 * Math.PI;
 
     public static void main(String[] args) throws IOException {
 
-        // 1. Create a randomly sorted list of all the colours.
-        // 2. Starting from a random seed, add the colours one by one in the 'best' place.
 
-        final int[][] data = new int[IMAGE_SIZE][IMAGE_SIZE];
-        for (int i = 0; i < IMAGE_SIZE; i++) {
-            for (int j = 0; j < IMAGE_SIZE; j++) {
-                data[i][j] = UNSET;
+        final int imageWidth = IMAGE_SIZE;
+        final int imageHeight = IMAGE_SIZE * 2;
+        final int debugTime = 10_000;
+
+
+        final int[][] data = Data.newArray(UNSET, imageWidth, imageHeight);
+        final int[] allColours = Data.readOrWrite("allColoursInterleaved", Main::getAllColoursInterleaved);
+        final Availabilities availabilities = new Availabilities();
+
+
+        System.out.println("Seeding image...");
+//        availabilities.add(Color.GRAY.getRGB() & 0xFFFFFF, new Point(IMAGE_SIZE / 2, IMAGE_SIZE / 2));
+
+//        {
+//            List<Integer> list = IntStream.range(0, imageWidth).mapToObj(i -> i).collect(Collectors.toList());
+//            Collections.shuffle(list);
+//            list.stream().forEach(x -> availabilities.add(Color.BLACK.getRGB() & 0xFFFFFF, new Point(x, 0)));
+//        }
+
+        {
+            for (double theta = 0; theta < TAU; theta += 0.1) {
+                int x = (imageWidth / 2) + (int)(100 * Math.sin(theta));
+                int y = (imageHeight / 2) + (int)(100 * Math.cos(theta)) + 500;
+                int colour = Color.getHSBColor((float) (theta / TAU), 1.0f, 1.0f).getRGB() & 0xFFFFFF;
+                availabilities.add(colour, new Point(x, y));
             }
         }
 
-        int[] allColours = Data.readOrWrite("allColoursInterleaved", Main::getAllColoursInterleaved);
 
-        RgbOctree availableColours = new RgbOctree();
-        HashMap<Integer, LinkedList<Point>> availablePoints = new HashMap<>();
+        final int[][] averages = Data.newArray(UNSET, imageWidth, imageHeight);
 
-        availableColours.showDebugPane();
-
-        int seedColour = Color.GRAY.getRGB() & 0xFFFFFF;
-        availableColours.add(seedColour);
-        availablePoints.put(seedColour, new LinkedList<>());
-        availablePoints.get(seedColour).addFirst(new Point(IMAGE_SIZE / 2, IMAGE_SIZE / 2));
-        int[][] averages = new int[IMAGE_SIZE][IMAGE_SIZE];
-        for (int i = 0; i < IMAGE_SIZE; i++) {
-            for (int j = 0; j < IMAGE_SIZE; j++) {
-                averages[i][j] = UNSET;
-            }
-        }
-
-
-        // for each sorted colour - find the best place to put it.
 
         long start = System.currentTimeMillis();
         long mark = start;
@@ -62,13 +64,14 @@ public class Main {
         int lastI = 0;
         int progressThisChunk;
 
+
         System.out.println("Iterating...");
         for (int i = 0; i < PIXEL_COUNT; i++) {
 
             if (i%1000 == 0) {
                 long now = System.currentTimeMillis();
-                if (now > mark + 60_000) {
-                    mark += 60_000;
+                if (now > mark + debugTime) {
+                    mark += debugTime;
 
                     progressThisChunk = i - lastI;
                     lastI = i;
@@ -76,51 +79,33 @@ public class Main {
                     elapsedTime = now - start;
                     remainingTime = (elapsedTime * PIXEL_COUNT / i) - elapsedTime;
 
-                    System.out.print(
+                    System.out.println(
                             (Math.round((10000.0 * i) / PIXEL_COUNT) / 100) + "%"
-                                    + ", Available: " + availableColours.size() + " / " + availablePoints.size()
+                                    + ", " + availabilities
                                     + ", Elapsed: " + display(elapsedTime)
                                     + ", Remaining: " + display(remainingTime)
                                     + " or " + ((PIXEL_COUNT - i) / progressThisChunk) + " Minutes");
                     spitImage(data, "snapshot");
-//                    availableColours.debugToFile("octree-" + snapshotNumber);
                 }
             }
 
             int thisColour = allColours[i];
-
-            int bestColour = availableColours.probablyNearTo2(thisColour);
-            Point bestPoint;
-            LinkedList<Point> pointsForBestColour = availablePoints.get(bestColour);
-            bestPoint = pointsForBestColour.removeLast();
-            if (pointsForBestColour.isEmpty()) {
-                availableColours.remove(bestColour);
-                availablePoints.remove(bestColour);
-            }
+            Point bestPoint = availabilities.removeBest(thisColour);
             averages[bestPoint.x][bestPoint.y] = UNSET;
 
             data[bestPoint.x][bestPoint.y] = thisColour;
 
-            for (Point neighbour : neighbours(bestPoint)) {
+            for (Point neighbour : neighbours(bestPoint, imageWidth, imageHeight)) {
                 if (data[neighbour.x][neighbour.y] == UNSET) {
-
                     int currentAverage = averages[neighbour.x][neighbour.y];
                     if (currentAverage != UNSET) {
-                        LinkedList<Point> pointsForCurrentAverage = availablePoints.get(currentAverage);
-                        pointsForCurrentAverage.remove(neighbour);
-                        if (pointsForCurrentAverage.isEmpty()) {
-                            availableColours.remove(currentAverage);
-                            availablePoints.remove(currentAverage);
-                        }
+                        availabilities.remove(currentAverage, neighbour);
                     }
-
-                    int newAverage = averageColour(neighbours(neighbour), data);
-                    availableColours.add(newAverage);
-                    availablePoints.computeIfAbsent(newAverage, key -> new LinkedList()).addFirst(neighbour);
+                    int newAverage = averageColour(neighbours(neighbour, imageWidth, imageHeight), data);
+                    availabilities.add(newAverage, neighbour);
                     averages[neighbour.x][neighbour.y] = newAverage;
                 }
             }
-
         }
 
         spitImage(data, "final");
@@ -171,11 +156,13 @@ public class Main {
     }
 
     private static void spitImage(int[][] data, Object suffix) throws IOException {
-        BufferedImage image = new BufferedImage(IMAGE_SIZE, IMAGE_SIZE, BufferedImage.TYPE_INT_RGB);
+        int width = data.length;
+        int height = data[0].length;
+        BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
         // TODO: is there a bulk operation for this?
-        for (int x = 0; x < IMAGE_SIZE; x++) {
-            for (int y = 0; y < IMAGE_SIZE; y++) {
-                image.setRGB(x, y, data[x][y]);
+        for (int x = 0; x < width; x++) {
+            for (int y = 0; y < height; y++) {
+                image.setRGB(x, y, data[x][y] | 0xFF000000);
             }
         }
         String filename = String.format("Render_%03d-%s", NUMBER, suffix);
@@ -187,12 +174,12 @@ public class Main {
             new Point(UNSET,  0),                    new Point( 1,  0),
             new Point(UNSET,  1), new Point( 0,  1), new Point( 1,  1)};
 
-    public static List<Point> neighbours(Point input) {
+    public static List<Point> neighbours(Point input, int imageWidth, int imageHeight) {
         List<Point> output = new LinkedList<>();
         for (int i = 0; i < neighbours.length; i++) {
             int x = input.x + neighbours[i].x;
             int y = input.y + neighbours[i].y;
-            if (0 <= x && x < IMAGE_SIZE && 0 <= y && y < IMAGE_SIZE) {
+            if (0 <= x && x < imageWidth && 0 <= y && y < imageHeight) {
                 output.add(new Point(x, y));
             }
         }
