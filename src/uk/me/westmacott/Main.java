@@ -6,6 +6,7 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -22,6 +23,27 @@ public class Main {
     static final int NUMBER = Data.readAndWrite("Number", () -> 0, i -> i++);
     public static final double TAU = 2.0 * Math.PI;
 
+
+
+    static class ColourSeries {
+
+        /* Hue 0.0 -> 1.0 */
+        static int[] allColoursInterleaved() {
+            return Data.readOrWrite("allColoursInterleaved", Main::getAllColoursInterleaved);
+        }
+
+        static int[] allColoursShuffled() {
+            return Data.readOrWrite("allColoursShuffled", Main::getAllColoursShuffled);
+        }
+
+        /* Sat 0.0 -> 1.0 ? */
+        static int[] allColoursBySaturation() {
+            return Data.readOrWrite("allColoursBySaturation", () -> Main.getAllColoursOrdered(bySaturation));
+        }
+
+    }
+
+
     public static void main(String[] args) throws IOException {
 
 
@@ -31,7 +53,7 @@ public class Main {
 
 
         final int[][] data = Data.newArray(UNSET, imageWidth, imageHeight);
-        final int[] allColours = Data.readOrWrite("allColoursInterleaved", Main::getAllColoursInterleaved);
+        final int[] allColours = ColourSeries.allColoursBySaturation();
         final Availabilities availabilities = new Availabilities();
 
 
@@ -46,8 +68,8 @@ public class Main {
 
         {
             for (double theta = 0; theta < TAU; theta += 0.1) {
-                int x = (imageWidth / 2) + (int)(100 * Math.sin(theta));
-                int y = (imageHeight / 2) + (int)(100 * Math.cos(theta)) + 500;
+                int x = (imageWidth / 2) + (int)(2000 * Math.sin(theta));
+                int y = (imageHeight / 2) + (int)(2000 * Math.cos(theta));
                 int colour = Color.getHSBColor((float) (theta / TAU), 1.0f, 1.0f).getRGB() & 0xFFFFFF;
                 availabilities.add(colour, new Point(x, y));
             }
@@ -112,20 +134,41 @@ public class Main {
         System.out.println("Final image rendered.");
     }
 
-    private static int[] getAllColours() {
+    private static int[] getAllColoursShuffled() {
         System.out.println("Generating colours...");
         List<Integer> allColoursAsIntegers = IntStream.range(0, PIXEL_COUNT).mapToObj(i -> i).collect(Collectors.toList());
 
         System.out.println("Arranging colours...");
         Collections.shuffle(allColoursAsIntegers);
-        Collections.sort(allColoursAsIntegers, (c1, c2) -> getHue(c1) - getHue(c2));
+
+        System.out.println("Unboxing colours...");
+        return allColoursAsIntegers.stream().mapToInt(i -> i).toArray();
+    }
+
+    static final Comparator<Integer> byHue = (c1, c2) -> getHue(c1) - getHue(c2);
+    static final Comparator<Integer> bySaturation = (c1, c2) -> getSaturation(c1) - getSaturation(c2);
+
+    private static int getSaturation(Integer rgb) {
+        int red = (rgb >> 16) & 0xFF;
+        int green = (rgb >> 8) & 0xFF;
+        int blue = rgb & 0xFF;
+        return (int) (1000.0f * Color.RGBtoHSB(red, green, blue, new float[3])[1]);
+    }
+
+    private static int[] getAllColoursOrdered(Comparator<Integer> ordering) {
+        System.out.println("Generating colours...");
+        List<Integer> allColoursAsIntegers = IntStream.range(0, PIXEL_COUNT).mapToObj(i -> i).collect(Collectors.toList());
+
+        System.out.println("Arranging colours...");
+        Collections.shuffle(allColoursAsIntegers);
+        Collections.sort(allColoursAsIntegers, ordering);
 
         System.out.println("Unboxing colours...");
         return allColoursAsIntegers.stream().mapToInt(i -> i).toArray();
     }
 
     private static int[] getAllColoursInterleaved() {
-        int[] primitiveArray = getAllColours();
+        int[] primitiveArray = getAllColoursOrdered(byHue);
         System.out.println("Interleaving colours...");
         int[] interleaved = new int[PIXEL_COUNT];
         int i = 0;
@@ -162,7 +205,9 @@ public class Main {
         // TODO: is there a bulk operation for this?
         for (int x = 0; x < width; x++) {
             for (int y = 0; y < height; y++) {
-                image.setRGB(x, y, data[x][y] | 0xFF000000);
+                if (data[x][y] != UNSET) {
+                    image.setRGB(x, y, data[x][y] | 0xFF000000);
+                }
             }
         }
         String filename = String.format("Render_%03d-%s", NUMBER, suffix);
@@ -170,9 +215,9 @@ public class Main {
     }
 
     public static Point[] neighbours = new Point[]{
-            new Point(UNSET, UNSET), new Point( 0, UNSET), new Point( 1, UNSET),
-            new Point(UNSET,  0),                    new Point( 1,  0),
-            new Point(UNSET,  1), new Point( 0,  1), new Point( 1,  1)};
+            new Point(-1, -1), new Point( 0, -1), new Point( 1, -1),
+            new Point(-1,  0),                    new Point( 1,  0),
+            new Point(-1,  1), new Point( 0,  1), new Point( 1,  1)};
 
     public static List<Point> neighbours(Point input, int imageWidth, int imageHeight) {
         List<Point> output = new LinkedList<>();
