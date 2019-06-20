@@ -20,7 +20,7 @@ public class Main {
     static final int PIXEL_COUNT = COLOUR_CUBE_SIZE * COLOUR_CUBE_SIZE * COLOUR_CUBE_SIZE;
     static final int UNSET = -1;
 
-    static final int NUMBER = Data.readAndWrite("Number", () -> 0, i -> i++);
+    static final int NUMBER = Data.readAndWrite("Number", () -> 0, i -> i + 1);
     public static final double TAU = 2.0 * Math.PI;
 
 
@@ -45,7 +45,6 @@ public class Main {
 
 
     public static void main(String[] args) throws IOException {
-
 
         final int imageWidth = IMAGE_SIZE;
         final int imageHeight = IMAGE_SIZE * 2;
