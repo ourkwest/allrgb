@@ -6,14 +6,19 @@ import java.nio.file.Paths;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-public class Data {
+import static uk.me.westmacott.Constants.UNSET;
+
+/**
+ * Make it easy to stash data in the local file system.
+ */
+class Data {
 
     private static Path path = Paths.get(".", "data");
     static {
         path.toFile().mkdir();
     }
 
-    public static <T> T readOrWrite(String name, Supplier<T> supplier) {
+    static <T> T readOrWrite(String name, Supplier<T> supplier) {
         File file = path.resolve(Paths.get(name + ".data")).toFile();
         T data;
         try {
@@ -27,7 +32,7 @@ public class Data {
         return data;
     }
 
-    public static <T> T readAndWrite(String name, Supplier<T> supplier, Function<T,T> mutator) {
+    static <T> T readAndWrite(String name, Supplier<T> supplier, Function<T, T> mutator) {
         File file = path.resolve(Paths.get(name + ".data")).toFile();
         T data;
         try {
@@ -60,26 +65,18 @@ public class Data {
         return data;
     }
 
-    public static int[] newArray(int initialValue, int size) {
+    private static int[] newArray(int size) {
         int[] result = new int[size];
         for (int i = 0; i < size; i++) {
-            result[i] = initialValue;
+            result[i] = UNSET;
         }
         return result;
     }
 
-    public static int[][] newArray(int initialValue, int size0, int size1) {
+    static int[][] newArray(int size0, int size1) {
         int[][] result = new int[size0][size1];
         for (int i = 0; i < size0; i++) {
-            result[i] = newArray(initialValue, size1);
-        }
-        return result;
-    }
-
-    public static int[][][] newArray(int initialValue, int size0, int size1, int size2) {
-        int[][][] result = new int[size0][size1][size2];
-        for (int i = 0; i < size0; i++) {
-            result[i] = newArray(initialValue, size1, size2);
+            result[i] = newArray(size1);
         }
         return result;
     }

@@ -4,26 +4,28 @@ import java.awt.*;
 import java.util.HashMap;
 import java.util.LinkedList;
 
+/**
+ * For each colour, stores a list of available pixels that would like to be as close to that colour as possible.
+ */
 public class Availabilities {
 
-    RgbOctree colours = new RgbOctree();
-    HashMap<Integer, LinkedList<Point>> pointsByColour = new HashMap<>();
-
-    int pointCount = 0;
+    private RgbOctree colours = new RgbOctree();
+    private HashMap<Integer, LinkedList<Point>> pointsByColour = new HashMap<>();
+    private int pointCount = 0;
 
     @Override
     public String toString() {
         return "Availabilities(" + colours.size() + " : " + pointCount + ")";
     }
 
-    public void add(int colour, Point point) {
+    void add(int colour, Point point) {
         colours.add(colour);
-        pointsByColour.computeIfAbsent(colour, x -> new LinkedList()).addFirst(point);
+        pointsByColour.computeIfAbsent(colour, x -> new LinkedList<>()).addFirst(point);
         pointCount++;
     }
 
-    public Point removeBest(int target) {
-        int bestColour = colours.probablyNearTo2(target);
+    Point removeBest(int targetColour) {
+        int bestColour = colours.probablyNearTo2(targetColour);
         LinkedList<Point> pointsForBestColour = pointsByColour.get(bestColour);
         Point bestPoint = pointsForBestColour.removeLast();
         pointCount--;
@@ -34,7 +36,7 @@ public class Availabilities {
         return bestPoint;
     }
 
-    public void remove(int colour, Point point) {
+    void remove(int colour, Point point) {
         LinkedList<Point> pointsForColour = pointsByColour.get(colour);
         pointsForColour.remove(point);
         pointCount--;

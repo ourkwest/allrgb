@@ -5,56 +5,25 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
-// Mountains and lettuce leaves and lightning and space.
+import static uk.me.westmacott.Constants.*;
+
+/**
+ * Mountains and lettuce leaves and lightning and space.
+ */
 public class Main {
-
-    static final int COLOUR_CUBE_SIZE = 256;
-    static final int IMAGE_SIZE = (int) Math.pow(COLOUR_CUBE_SIZE * COLOUR_CUBE_SIZE * COLOUR_CUBE_SIZE, 0.5);
-    static final int PIXEL_COUNT = COLOUR_CUBE_SIZE * COLOUR_CUBE_SIZE * COLOUR_CUBE_SIZE;
-    static final int UNSET = -1;
-
-    static final int NUMBER = Data.readAndWrite("Number", () -> 0, i -> i + 1);
-    public static final double TAU = 2.0 * Math.PI;
-
-
-
-    static class ColourSeries {
-
-        /* Hue 0.0 -> 1.0 */
-        static int[] allColoursInterleaved() {
-            return Data.readOrWrite("allColoursInterleaved", Main::getAllColoursInterleaved);
-        }
-
-        static int[] allColoursShuffled() {
-            return Data.readOrWrite("allColoursShuffled", Main::getAllColoursShuffled);
-        }
-
-        /* Sat 0.0 -> 1.0 ? */
-        static int[] allColoursBySaturation() {
-            return Data.readOrWrite("allColoursBySaturation", () -> Main.getAllColoursOrdered(bySaturation));
-        }
-
-    }
-
 
     public static void main(String[] args) throws IOException {
 
-        final int imageWidth = IMAGE_SIZE;
-        final int imageHeight = IMAGE_SIZE * 2;
+        final int imageWidth = IMAGE_SIZE * 2;
+        final int imageHeight = IMAGE_SIZE;
         final int debugTime = 10_000;
 
-
-        final int[][] data = Data.newArray(UNSET, imageWidth, imageHeight);
-        final int[] allColours = ColourSeries.allColoursBySaturation();
+        final int[][] data = Data.newArray(imageWidth, imageHeight);
+        final int[] allColours = ColourSeries.allColoursShuffled();
         final Availabilities availabilities = new Availabilities();
-
 
         System.out.println("Seeding image...");
 //        availabilities.add(Color.GRAY.getRGB() & 0xFFFFFF, new Point(IMAGE_SIZE / 2, IMAGE_SIZE / 2));
@@ -75,7 +44,7 @@ public class Main {
         }
 
 
-        final int[][] averages = Data.newArray(UNSET, imageWidth, imageHeight);
+        final int[][] averages = Data.newArray(imageWidth, imageHeight);
 
 
         long start = System.currentTimeMillis();
@@ -133,52 +102,6 @@ public class Main {
         System.out.println("Final image rendered.");
     }
 
-    private static int[] getAllColoursShuffled() {
-        System.out.println("Generating colours...");
-        List<Integer> allColoursAsIntegers = IntStream.range(0, PIXEL_COUNT).mapToObj(i -> i).collect(Collectors.toList());
-
-        System.out.println("Arranging colours...");
-        Collections.shuffle(allColoursAsIntegers);
-
-        System.out.println("Unboxing colours...");
-        return allColoursAsIntegers.stream().mapToInt(i -> i).toArray();
-    }
-
-    static final Comparator<Integer> byHue = (c1, c2) -> getHue(c1) - getHue(c2);
-    static final Comparator<Integer> bySaturation = (c1, c2) -> getSaturation(c1) - getSaturation(c2);
-
-    private static int getSaturation(Integer rgb) {
-        int red = (rgb >> 16) & 0xFF;
-        int green = (rgb >> 8) & 0xFF;
-        int blue = rgb & 0xFF;
-        return (int) (1000.0f * Color.RGBtoHSB(red, green, blue, new float[3])[1]);
-    }
-
-    private static int[] getAllColoursOrdered(Comparator<Integer> ordering) {
-        System.out.println("Generating colours...");
-        List<Integer> allColoursAsIntegers = IntStream.range(0, PIXEL_COUNT).mapToObj(i -> i).collect(Collectors.toList());
-
-        System.out.println("Arranging colours...");
-        Collections.shuffle(allColoursAsIntegers);
-        Collections.sort(allColoursAsIntegers, ordering);
-
-        System.out.println("Unboxing colours...");
-        return allColoursAsIntegers.stream().mapToInt(i -> i).toArray();
-    }
-
-    private static int[] getAllColoursInterleaved() {
-        int[] primitiveArray = getAllColoursOrdered(byHue);
-        System.out.println("Interleaving colours...");
-        int[] interleaved = new int[PIXEL_COUNT];
-        int i = 0;
-        int j = PIXEL_COUNT - 1;
-        int k = 0;
-        while (k < (PIXEL_COUNT - 3)) {
-            interleaved[k++] = primitiveArray[i++];
-            interleaved[k++] = primitiveArray[j--];
-        }
-        return interleaved;
-    }
 
     private static int averageColour(List<Point> neighbours, int[][] data) {
         int red = 0, grn = 0, blu = 0, count = 0;
@@ -213,16 +136,16 @@ public class Main {
         ImageIO.write(image, "png", new File("./" + filename + ".png"));
     }
 
-    public static Point[] neighbours = new Point[]{
+    private static Point[] neighbours = new Point[]{
             new Point(-1, -1), new Point( 0, -1), new Point( 1, -1),
             new Point(-1,  0),                    new Point( 1,  0),
             new Point(-1,  1), new Point( 0,  1), new Point( 1,  1)};
 
-    public static List<Point> neighbours(Point input, int imageWidth, int imageHeight) {
+    private static List<Point> neighbours(Point input, int imageWidth, int imageHeight) {
         List<Point> output = new LinkedList<>();
-        for (int i = 0; i < neighbours.length; i++) {
-            int x = input.x + neighbours[i].x;
-            int y = input.y + neighbours[i].y;
+        for (Point neighbour : neighbours) {
+            int x = input.x + neighbour.x;
+            int y = input.y + neighbour.y;
             if (0 <= x && x < imageWidth && 0 <= y && y < imageHeight) {
                 output.add(new Point(x, y));
             }
@@ -230,36 +153,7 @@ public class Main {
         return output;
     }
 
-    public static int getHue(int rgb) {
-        int red = (rgb >> 16) & 0xFF;
-        int green = (rgb >> 8) & 0xFF;
-        int blue = rgb & 0xFF;
-        return getHue(red, green, blue);
-    }
-
-    public static int getHue(int red, int green, int blue) {
-
-        float min = Math.min(Math.min(red, green), blue);
-        float max = Math.max(Math.max(red, green), blue);
-
-        float hue;
-        if (max == red) {
-            hue = (green - blue) / (max - min);
-
-        } else if (max == green) {
-            hue = 2f + (blue - red) / (max - min);
-
-        } else {
-            hue = 4f + (red - green) / (max - min);
-        }
-
-        hue = hue * 60;
-        if (hue < 0) hue = hue + 360;
-
-        return Math.round(hue);
-    }
-
-    public static String display(long millis) {
+    static String display(long millis) {
         double duration = millis;
         String unit = "Millisecond";
         if (duration >= 1000) {

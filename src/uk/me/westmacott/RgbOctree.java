@@ -12,6 +12,12 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
+import static uk.me.westmacott.Constants.UNSET;
+
+/**
+ * Stores a count for each colour in RGB(255 * 255 * 255) colour space.
+ * Also provides a way to find the nearest non-zero count to a target colour.
+ */
 public class RgbOctree {
 
 
@@ -53,7 +59,6 @@ public class RgbOctree {
 //        System.out.println(colourCount);
     }
 
-    public static final int UNSET = -1;
     int[] indexByRgb = new int[colourCount];
     int[] rgbByIndex = new int[colourCount];
     {
