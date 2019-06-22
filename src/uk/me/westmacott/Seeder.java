@@ -12,19 +12,19 @@ import static uk.me.westmacott.Constants.TAU;
 public enum Seeder {
 
     CENTRAL_GREY_DOT() {
-        public void seed(Availabilities availabilities, int[][] canvas) {
+        public void seed(AvailablePointsByTargetColour availabilities, int[][] canvas) {
             seed(availabilities, canvas, Data.width(canvas) / 2, Data.height(canvas) / 2, Color.GRAY);
         }
     },
     BLACK_TOP_ROW() {
-        public void seed(Availabilities availabilities, int[][] canvas) {
+        public void seed(AvailablePointsByTargetColour availabilities, int[][] canvas) {
             List<Integer> list = IntStream.range(0, Data.width(canvas)).boxed().collect(Collectors.toList());
             Collections.shuffle(list);
             list.forEach(x -> seed(availabilities, canvas, x, 0, Color.BLACK));
         }
     },
     CIRCLE_OF_COLOUR() {
-        public void seed(Availabilities availabilities, int[][] canvas) {
+        public void seed(AvailablePointsByTargetColour availabilities, int[][] canvas) {
             int width = Data.width(canvas);
             int height = Data.height(canvas);
             int radius = (int) (Math.min(width, height) * 0.9);
@@ -37,11 +37,11 @@ public enum Seeder {
         }
     };
 
-    public abstract void seed(Availabilities availabilities, int[][] canvas);
+    public abstract void seed(AvailablePointsByTargetColour availablePointsByTargetColour, int[][] canvas);
 
-    static void seed(Availabilities availabilities, int[][] canvas, int x, int y, Color colour) {
+    static void seed(AvailablePointsByTargetColour availablePointsByTargetColour, int[][] canvas, int x, int y, Color colour) {
         if (canvas[x][y] != MASKED) {
-            availabilities.add(colour.getRGB() & 0xFFFFFF, new Point(x,y));
+            availablePointsByTargetColour.add(colour.getRGB() & 0xFFFFFF, new Point(x,y));
         }
     }
 

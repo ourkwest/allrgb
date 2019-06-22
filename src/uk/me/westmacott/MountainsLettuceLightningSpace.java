@@ -12,7 +12,7 @@ class MountainsLettuceLightningSpace {
 
 
     void render(ColourSeries colours,
-                Availabilities availabilities,
+                AvailablePointsByTargetColour availablePointsByTargetColour,
                 Masker masker,
                 Seeder seeder,
                 int[][] canvas,
@@ -26,7 +26,7 @@ class MountainsLettuceLightningSpace {
         masker.mask(canvas);
 
         System.out.println("Seeding...");
-        seeder.seed(availabilities, canvas);
+        seeder.seed(availablePointsByTargetColour, canvas);
 
         final int[] allColours = colours.asIntArray();
         final int[][] averages = Data.newArray(imageWidth, imageHeight);
@@ -54,7 +54,7 @@ class MountainsLettuceLightningSpace {
 
                     System.out.println(
                             (Math.round((10000.0 * i) / PIXEL_COUNT) / 100) + "%"
-                                    + ", " + availabilities
+                                    + ", " + availablePointsByTargetColour
                                     + ", Elapsed: " + Data.formatTime(elapsedTime)
                                     + ", Remaining: " + Data.formatTime(remainingTime)
                                     + " or " + ((PIXEL_COUNT - i) / progressThisChunk) + " Minutes");
@@ -62,13 +62,13 @@ class MountainsLettuceLightningSpace {
                 }
             }
 
-            if (!availabilities.live()) {
-                System.out.println("Availabilities exhausted!");
+            if (availablePointsByTargetColour.empty()) {
+                System.out.println("AvailablePointsByTargetColour exhausted!");
                 break;
             }
 
             int thisColour = allColours[i];
-            Point bestPoint = availabilities.removeBest(thisColour);
+            Point bestPoint = availablePointsByTargetColour.removeClosest(thisColour);
             averages[bestPoint.x][bestPoint.y] = UNSET;
             canvas[bestPoint.x][bestPoint.y] = thisColour;
 
@@ -76,10 +76,10 @@ class MountainsLettuceLightningSpace {
                 if (canvas[neighbour.x][neighbour.y] == UNSET) {
                     int currentAverage = averages[neighbour.x][neighbour.y];
                     if (currentAverage != UNSET) {
-                        availabilities.remove(currentAverage, neighbour);
+                        availablePointsByTargetColour.remove(currentAverage, neighbour);
                     }
                     int newAverage = averageColour(neighbours(neighbour, imageWidth, imageHeight), canvas);
-                    availabilities.add(newAverage, neighbour);
+                    availablePointsByTargetColour.add(newAverage, neighbour);
                     averages[neighbour.x][neighbour.y] = newAverage;
                 }
             }
@@ -112,7 +112,7 @@ class MountainsLettuceLightningSpace {
             new Point(-1,  0),                    new Point( 1,  0),
             new Point(-1,  1), new Point( 0,  1), new Point( 1,  1)};
 
-    private static java.util.List<Point> neighbours(Point input, int imageWidth, int imageHeight) {
+    private static List<Point> neighbours(Point input, int imageWidth, int imageHeight) {
         List<Point> output = new LinkedList<>();
         for (Point neighbour : neighbours) {
             int x = input.x + neighbour.x;

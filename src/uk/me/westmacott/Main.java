@@ -12,7 +12,7 @@ public class Main {
     public static void main(String[] args) throws IOException {
 
         final int[][] canvas = Data.newArray(IMAGE_SIZE * 2, IMAGE_SIZE);
-        final Availabilities availabilities = new Availabilities();
+        final AvailablePointsByTargetColour availabilities = new AvailablePointsByTargetColour();
 
         new MountainsLettuceLightningSpace().render(
                 ColourSeries.INTERLEAVED,

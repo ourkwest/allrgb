@@ -7,7 +7,7 @@ import java.util.LinkedList;
 /**
  * For each colour, stores a list of available pixels that would like to be as close to that colour as possible.
  */
-public class Availabilities {
+public class AvailablePointsByTargetColour {
 
     private RgbOctree colours = new RgbOctree();
     private HashMap<Integer, LinkedList<Point>> pointsByColour = new HashMap<>();
@@ -15,27 +15,27 @@ public class Availabilities {
 
     @Override
     public String toString() {
-        return "Availabilities(" + colours.size() + " : " + pointCount + ")";
+        return "AvailablePointsByTargetColour(" + colours.size() + " : " + pointCount + ")";
     }
 
-    boolean live() {
-        return colours.size() > 0;
+    boolean empty() {
+        return colours.size() == 0;
     }
 
     void add(int colour, Point point) {
         colours.add(colour);
-        pointsByColour.computeIfAbsent(colour, x -> new LinkedList<>()).addFirst(point); // TODO: experiment: addLast could make a big difference to algorithm!!!
+        pointsByColour.computeIfAbsent(colour, x -> new LinkedList<>()).addFirst(point);
         pointCount++;
     }
 
-    Point removeBest(int targetColour) {
-        int bestColour = colours.probablyNearTo2(targetColour);
-        LinkedList<Point> pointsForBestColour = pointsByColour.get(bestColour);
-        Point bestPoint = pointsForBestColour.removeLast();
+    Point removeClosest(int targetColour) {
+        int closestColour = colours.probablyNearTo2(targetColour);
+        LinkedList<Point> pointsForClosestColour = pointsByColour.get(closestColour);
+        Point bestPoint = pointsForClosestColour.removeLast(); // TODO: experiment: removeFirst could make a big difference to algorithm!!!
         pointCount--;
-        if (pointsForBestColour.isEmpty()) {
-            colours.remove(bestColour);
-            pointsByColour.remove(bestColour);
+        if (pointsForClosestColour.isEmpty()) {
+            colours.remove(closestColour);
+            pointsByColour.remove(closestColour);
         }
         return bestPoint;
     }

@@ -20,16 +20,6 @@ public enum Masker {
                 int offsetY = y - midY;
                 return (offsetX * offsetX + offsetY * offsetY) < rSquared;
             });
-
-//            for (int x = 0; x < width; x++) {
-//                for (int y = 0; y < height; y++) {
-//                    int offsetX = x - midX;
-//                    int offsetY = y - midY;
-//                    if ((offsetX * offsetX + offsetY * offsetY) < rSquared) {
-//                        canvas[x][y] = MASKED;
-//                    }
-//                }
-//            }
         }
     };
 
