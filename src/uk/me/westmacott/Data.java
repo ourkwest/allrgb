@@ -80,6 +80,14 @@ class Data {
         return result;
     }
 
+    static int width(int[][] canvas) {
+        return canvas.length;
+    }
+
+    static int height(int[][] canvas) {
+        return canvas[0].length;
+    }
+
     static String formatTime(long millis) {
         double duration = millis;
         String unit = "Millisecond";

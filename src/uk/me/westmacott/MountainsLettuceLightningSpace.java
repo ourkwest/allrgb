@@ -11,11 +11,18 @@ import static uk.me.westmacott.Constants.UNSET;
 class MountainsLettuceLightningSpace {
 
 
-    void render(ColourSeries colours, Availabilities availabilities, int[][] canvas, ImageSpitter spitter) throws IOException {
+    void render(ColourSeries colours,
+                Availabilities availabilities,
+                Seeder seeder,
+                int[][] canvas,
+                ImageSpitter spitter) throws IOException {
 
-        final int imageWidth = canvas.length;
-        final int imageHeight = canvas[0].length;
+        final int imageWidth = Data.width(canvas);
+        final int imageHeight = Data.height(canvas);
         final int debugTime = 10_000;
+
+        System.out.println("Seeding...");
+        seeder.seed(availabilities, imageWidth, imageHeight);
 
         final int[] allColours = colours.asIntArray();
         final int[][] averages = Data.newArray(imageWidth, imageHeight);
