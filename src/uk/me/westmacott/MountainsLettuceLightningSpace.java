@@ -32,37 +32,17 @@ class MountainsLettuceLightningSpace {
         final int[][] averages = Data.newArray(imageWidth, imageHeight);
 
         long start = System.currentTimeMillis();
-        long mark = start;
-        long remainingTime;
-        long elapsedTime;
-        int lastI = 0;
-        int progressThisChunk;
 
         System.out.println("Iterating...");
+        System.out.println(new String(new char[PIXEL_COUNT / DEBUG_COUNT]).replace("\0", "_"));
         for (int i = 0; i < PIXEL_COUNT; i++) {
 
-            if (i%1000 == 0) {
-                long now = System.currentTimeMillis();
-                if (now > mark + debugTime) {
-                    mark += debugTime;
-
-                    progressThisChunk = i - lastI;
-                    lastI = i;
-
-                    elapsedTime = now - start;
-                    remainingTime = (elapsedTime * PIXEL_COUNT / i) - elapsedTime;
-
-                    System.out.println(
-                            (Math.round((10000.0 * i) / PIXEL_COUNT) / 100) + "%"
-                                    + ", " + availablePointsByTargetColour
-                                    + ", Elapsed: " + Data.formatTime(elapsedTime)
-                                    + ", Remaining: " + Data.formatTime(remainingTime)
-                                    + " or " + ((PIXEL_COUNT - i) / progressThisChunk) + " Minutes");
-                    spitter.spitImage(canvas, "snapshot");
-                }
+            if (i%DEBUG_COUNT == 0) {
+                System.out.print("#");
             }
 
             if (availablePointsByTargetColour.empty()) {
+                System.out.println();
                 System.out.println("AvailablePointsByTargetColour exhausted!");
                 break;
             }
@@ -84,7 +64,9 @@ class MountainsLettuceLightningSpace {
                 }
             }
         }
+        System.out.println();
         System.out.println("All colours rendered.");
+        System.out.println("Iteration time: " + (System.currentTimeMillis() - start) / 1000 + " seconds");
 
         spitter.spitImage(canvas, "final");
         System.out.println("Final image rendered.");
