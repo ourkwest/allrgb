@@ -34,11 +34,14 @@ class MountainsLettuceLightningSpace {
         long start = System.currentTimeMillis();
 
         System.out.println("Iterating...");
-        System.out.println(new String(new char[PIXEL_COUNT / DEBUG_COUNT]).replace("\0", "_"));
+        System.out.println(new String(new char[PIXEL_COUNT / DEBUG_EVERY]).replace("\0", "_"));
         for (int i = 0; i < PIXEL_COUNT; i++) {
 
-            if (i%DEBUG_COUNT == 0) {
+            if (i % DEBUG_EVERY == 0) {
                 System.out.print("#");
+                if (i % SNAPSHOT_EVERY == 0) {
+                    spitter.spitImage(canvas, "snapshot");
+                }
             }
 
             if (availablePointsByTargetColour.empty()) {

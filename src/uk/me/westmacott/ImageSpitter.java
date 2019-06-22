@@ -6,11 +6,10 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-import static uk.me.westmacott.Constants.NUMBER;
-
 class ImageSpitter {
 
     private final Path directory;
+    private final Integer renderingNumber;
 
     ImageSpitter() {
         this(".");
@@ -19,6 +18,7 @@ class ImageSpitter {
     ImageSpitter(String directory) {
         this.directory = Paths.get(directory);
         this.directory.toFile().mkdirs();
+        this.renderingNumber = Data.readAndWrite("Number", () -> 0, i -> i + 1);
     }
 
     void spitImage(int[][] canvas, Object suffix) throws IOException {
@@ -33,7 +33,7 @@ class ImageSpitter {
                 }
             }
         }
-        String filename = String.format("Render_%03d-%s.png", NUMBER, suffix);
+        String filename = String.format("Render_%03d-%s.png", renderingNumber, suffix);
         ImageIO.write(image, "png", directory.resolve(filename).toFile());
     }
 

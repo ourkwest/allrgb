@@ -18,7 +18,8 @@ public class Main {
         new MountainsLettuceLightningSpace().render(
                 ColourSeries.INTERLEAVED,
                 availabilities,
-                Masker.BIG_DOT, Seeder.BLACK_TOP_ROW,
+                Masker.GAPPED_RING,
+                Seeder.CENTRAL_GREY_DOT,
                 canvas,
                 new ImageSpitter("renders"));
     }
