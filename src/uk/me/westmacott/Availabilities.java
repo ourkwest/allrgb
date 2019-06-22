@@ -18,9 +18,13 @@ public class Availabilities {
         return "Availabilities(" + colours.size() + " : " + pointCount + ")";
     }
 
+    boolean live() {
+        return colours.size() > 0;
+    }
+
     void add(int colour, Point point) {
         colours.add(colour);
-        pointsByColour.computeIfAbsent(colour, x -> new LinkedList<>()).addFirst(point);
+        pointsByColour.computeIfAbsent(colour, x -> new LinkedList<>()).addFirst(point); // TODO: experiment: addLast could make a big difference to algorithm!!!
         pointCount++;
     }
 

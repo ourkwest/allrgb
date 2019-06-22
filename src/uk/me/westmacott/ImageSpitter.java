@@ -2,14 +2,11 @@ package uk.me.westmacott;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
-import java.awt.image.RenderedImage;
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
 import static uk.me.westmacott.Constants.NUMBER;
-import static uk.me.westmacott.Constants.UNSET;
 
 class ImageSpitter {
 
@@ -31,7 +28,7 @@ class ImageSpitter {
         // TODO: is there a bulk operation for this?
         for (int x = 0; x < width; x++) {
             for (int y = 0; y < height; y++) {
-                if (canvas[x][y] != UNSET) {
+                if (canvas[x][y] >= 0) {
                     image.setRGB(x, y, canvas[x][y] | 0xFF000000);
                 }
             }

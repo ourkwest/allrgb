@@ -15,9 +15,9 @@ public class Main {
         final Availabilities availabilities = new Availabilities();
 
         new MountainsLettuceLightningSpace().render(
-                ColourSeries.BY_HUE,
+                ColourSeries.INTERLEAVED,
                 availabilities,
-                Seeder.BLACK_TOP_ROW,
+                Masker.BIG_DOT, Seeder.BLACK_TOP_ROW,
                 canvas,
                 new ImageSpitter("renders"));
     }

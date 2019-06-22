@@ -13,6 +13,7 @@ class MountainsLettuceLightningSpace {
 
     void render(ColourSeries colours,
                 Availabilities availabilities,
+                Masker masker,
                 Seeder seeder,
                 int[][] canvas,
                 ImageSpitter spitter) throws IOException {
@@ -21,8 +22,11 @@ class MountainsLettuceLightningSpace {
         final int imageHeight = Data.height(canvas);
         final int debugTime = 10_000;
 
+        System.out.println("Masking...");
+        masker.mask(canvas);
+
         System.out.println("Seeding...");
-        seeder.seed(availabilities, imageWidth, imageHeight);
+        seeder.seed(availabilities, canvas);
 
         final int[] allColours = colours.asIntArray();
         final int[][] averages = Data.newArray(imageWidth, imageHeight);
@@ -58,6 +62,11 @@ class MountainsLettuceLightningSpace {
                 }
             }
 
+            if (!availabilities.live()) {
+                System.out.println("Availabilities exhausted!");
+                break;
+            }
+
             int thisColour = allColours[i];
             Point bestPoint = availabilities.removeBest(thisColour);
             averages[bestPoint.x][bestPoint.y] = UNSET;
@@ -75,6 +84,7 @@ class MountainsLettuceLightningSpace {
                 }
             }
         }
+        System.out.println("All colours rendered.");
 
         spitter.spitImage(canvas, "final");
         System.out.println("Final image rendered.");

@@ -6,37 +6,43 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import static uk.me.westmacott.Constants.MASKED;
 import static uk.me.westmacott.Constants.TAU;
 
 public enum Seeder {
 
     CENTRAL_GREY_DOT() {
-        public void seed(Availabilities availabilities, int width, int height) {
-                availabilities.add(
-                        Color.GRAY.getRGB() & 0xFFFFFF,
-                        new Point(width / 2, height / 2));
+        public void seed(Availabilities availabilities, int[][] canvas) {
+            seed(availabilities, canvas, Data.width(canvas) / 2, Data.height(canvas) / 2, Color.GRAY);
         }
     },
     BLACK_TOP_ROW() {
-        public void seed(Availabilities availabilities, int width, int height) {
-            List<Integer> list = IntStream.range(0, width).boxed().collect(Collectors.toList());
+        public void seed(Availabilities availabilities, int[][] canvas) {
+            List<Integer> list = IntStream.range(0, Data.width(canvas)).boxed().collect(Collectors.toList());
             Collections.shuffle(list);
-            list.forEach(x -> availabilities.add(Color.BLACK.getRGB() & 0xFFFFFF, new Point(x, 0)));
+            list.forEach(x -> seed(availabilities, canvas, x, 0, Color.BLACK));
         }
     },
     CIRCLE_OF_COLOUR() {
-        public void seed(Availabilities availabilities, int width, int height) {
+        public void seed(Availabilities availabilities, int[][] canvas) {
+            int width = Data.width(canvas);
+            int height = Data.height(canvas);
             int radius = (int) (Math.min(width, height) * 0.9);
             for (double theta = 0; theta < TAU; theta += 0.1) {
                 int x = (width / 2) + (int)(radius * Math.sin(theta));
                 int y = (height / 2) + (int)(radius * Math.cos(theta));
-                int colour = Color.getHSBColor((float) (theta / TAU), 1.0f, 1.0f).getRGB() & 0xFFFFFF;
-                availabilities.add(colour, new Point(x, y));
+                Color colour = Color.getHSBColor((float) (theta / TAU), 1.0f, 1.0f);
+                seed(availabilities, canvas, x, y, colour);
             }
-
         }
     };
 
-    public abstract void seed(Availabilities availabilities, int width, int height);
+    public abstract void seed(Availabilities availabilities, int[][] canvas);
+
+    static void seed(Availabilities availabilities, int[][] canvas, int x, int y, Color colour) {
+        if (canvas[x][y] != MASKED) {
+            availabilities.add(colour.getRGB() & 0xFFFFFF, new Point(x,y));
+        }
+    }
 
 }
