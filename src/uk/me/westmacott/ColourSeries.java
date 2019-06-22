@@ -9,32 +9,56 @@ import java.util.stream.IntStream;
 
 import static uk.me.westmacott.Constants.PIXEL_COUNT;
 
-class ColourSeries {
+enum ColourSeries {
 
-    /* Hue 0.0 -> 1.0 */
-    static int[] allColoursInterleaved() {
-        return Data.readOrWrite("allColoursInterleaved", ColourSeries::getAllColoursInterleaved);
+    INTERLEAVED() {
+        @Override
+        int[] getOrderedColours() {
+            int[] primitiveArray = getAllColoursOrdered(byHue);
+            System.out.println("Interleaving colours...");
+            int[] interleaved = new int[PIXEL_COUNT];
+            int i = 0;
+            int j = PIXEL_COUNT - 1;
+            int k = 0;
+            while (k < (PIXEL_COUNT - 3)) {
+                interleaved[k++] = primitiveArray[i++];
+                interleaved[k++] = primitiveArray[j--];
+            }
+            return interleaved;
+        }
+    },
+    SHUFFLED() {
+        @Override
+        int[] getOrderedColours() {
+            System.out.println("Generating colours...");
+            List<Integer> allColoursAsIntegers = IntStream.range(0, PIXEL_COUNT).boxed().collect(Collectors.toList());
+
+            System.out.println("Arranging colours...");
+            Collections.shuffle(allColoursAsIntegers);
+
+            System.out.println("Unboxing colours...");
+            return allColoursAsIntegers.stream().mapToInt(i -> i).toArray();
+        }
+    },
+    BY_SATURATION() {
+        @Override
+        int[] getOrderedColours() {
+            return getAllColoursOrdered(ColourSeries.bySaturation);
+        }
+    },
+    BY_HUE() {
+        @Override
+        int[] getOrderedColours() {
+            return getAllColoursOrdered(ColourSeries.byHue);
+        }
+    };
+
+    public int[] asIntArray() {
+        String name = this.getClass().getEnclosingClass().getCanonicalName() + "." + this.name();
+        return Data.readOrWrite(name, this::getOrderedColours);
     }
 
-    static int[] allColoursShuffled() {
-        return Data.readOrWrite("allColoursShuffled", ColourSeries::getAllColoursShuffled);
-    }
-
-    /* Sat 0.0 -> 1.0 ? */
-    static int[] allColoursBySaturation() {
-        return Data.readOrWrite("allColoursBySaturation", () -> ColourSeries.getAllColoursOrdered(ColourSeries.bySaturation));
-    }
-
-    private static int[] getAllColoursShuffled() {
-        System.out.println("Generating colours...");
-        List<Integer> allColoursAsIntegers = IntStream.range(0, PIXEL_COUNT).boxed().collect(Collectors.toList());
-
-        System.out.println("Arranging colours...");
-        Collections.shuffle(allColoursAsIntegers);
-
-        System.out.println("Unboxing colours...");
-        return allColoursAsIntegers.stream().mapToInt(i -> i).toArray();
-    }
+    abstract int[] getOrderedColours();
 
     private static final Comparator<Integer> byHue = Comparator.comparingInt(ColourSeries::getHue);
     private static final Comparator<Integer> bySaturation = Comparator.comparingInt(ColourSeries::getSaturation);
@@ -85,20 +109,6 @@ class ColourSeries {
 
         System.out.println("Unboxing colours...");
         return allColoursAsIntegers.stream().mapToInt(i -> i).toArray();
-    }
-
-    private static int[] getAllColoursInterleaved() {
-        int[] primitiveArray = getAllColoursOrdered(byHue);
-        System.out.println("Interleaving colours...");
-        int[] interleaved = new int[PIXEL_COUNT];
-        int i = 0;
-        int j = PIXEL_COUNT - 1;
-        int k = 0;
-        while (k < (PIXEL_COUNT - 3)) {
-            interleaved[k++] = primitiveArray[i++];
-            interleaved[k++] = primitiveArray[j--];
-        }
-        return interleaved;
     }
 
 }

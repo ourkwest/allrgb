@@ -241,20 +241,20 @@ public class RgbOctreeTest {
 
         System.out.println();
         
-        System.out.println("TryAll: " + Main.display(timeA));
+        System.out.println("TryAll: " + MountainsLettuceLightningSpace.display(timeA));
         System.out.println();
 
-        System.out.println("Octree approx.: " + Main.display(timeB) + " Success: " + ((matchesB * 100.0) / (matchesB + failsB)) + "% (" + matchesB + " : " + failsB + ")");
+        System.out.println("Octree approx.: " + MountainsLettuceLightningSpace.display(timeB) + " Success: " + ((matchesB * 100.0) / (matchesB + failsB)) + "% (" + matchesB + " : " + failsB + ")");
         System.out.println("Average Error: " + (totalErrorB / failsB));
         System.out.println("Max / Min : " + maxErrorB + " / " + minErrorB);
         System.out.println();
 
-        System.out.println("Octree exact.: " + Main.display(timeC) + " Success: " + ((matchesC * 100.0) / (matchesC + failsC)) + "% (" + matchesC + " : " + failsC + ")");
+        System.out.println("Octree exact.: " + MountainsLettuceLightningSpace.display(timeC) + " Success: " + ((matchesC * 100.0) / (matchesC + failsC)) + "% (" + matchesC + " : " + failsC + ")");
         System.out.println("Average Error: " + (totalErrorC / failsC));
         System.out.println("Max / Min : " + maxErrorC + " / " + minErrorC);
         System.out.println();
 
-        System.out.println("Octree approx2.: " + Main.display(timeD) + " Success: " + ((matchesD * 100.0) / (matchesD + failsD)) + "% (" + matchesD + " : " + failsD + ")");
+        System.out.println("Octree approx2.: " + MountainsLettuceLightningSpace.display(timeD) + " Success: " + ((matchesD * 100.0) / (matchesD + failsD)) + "% (" + matchesD + " : " + failsD + ")");
         System.out.println("Average Error: " + (totalErrorD / failsD));
         System.out.println("Max / Min : " + maxErrorD + " / " + minErrorD);
         System.out.println();
