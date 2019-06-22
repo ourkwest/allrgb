@@ -3,6 +3,7 @@ package uk.me.westmacott;
 import java.io.*;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -67,9 +68,7 @@ class Data {
 
     private static int[] newArray(int size) {
         int[] result = new int[size];
-        for (int i = 0; i < size; i++) {
-            result[i] = UNSET;
-        }
+        Arrays.fill(result, UNSET);
         return result;
     }
 
@@ -79,6 +78,27 @@ class Data {
             result[i] = newArray(size1);
         }
         return result;
+    }
+
+    static String formatTime(long millis) {
+        double duration = millis;
+        String unit = "Millisecond";
+        if (duration >= 1000) {
+            duration /= 1000;
+            unit = "Second";
+            if (duration >= 60) {
+                duration /= 60;
+                unit = "Minute";
+                if (duration >= 60) {
+                    duration /= 60;
+                    unit = "Hour";
+                }
+            }
+        }
+        if (duration > 1) {
+            unit += "s";
+        }
+        return String.format("%4.2f %s", duration, unit);
     }
 
 }

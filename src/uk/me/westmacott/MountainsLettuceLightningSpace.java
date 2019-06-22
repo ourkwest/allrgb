@@ -11,14 +11,13 @@ import static uk.me.westmacott.Constants.UNSET;
 class MountainsLettuceLightningSpace {
 
 
-    void render(ColourSeries colours, Availabilities availabilities, Canvas canvas, ImageSpitter spitter) throws IOException {
+    void render(ColourSeries colours, Availabilities availabilities, int[][] canvas, ImageSpitter spitter) throws IOException {
 
-        final int imageWidth = canvas.getWidth();
-        final int imageHeight = canvas.getHeight();
+        final int imageWidth = canvas.length;
+        final int imageHeight = canvas[0].length;
         final int debugTime = 10_000;
 
         final int[] allColours = colours.asIntArray();
-        final int[][] data = Data.newArray(imageWidth, imageHeight);
         final int[][] averages = Data.newArray(imageWidth, imageHeight);
 
         long start = System.currentTimeMillis();
@@ -45,22 +44,20 @@ class MountainsLettuceLightningSpace {
                     System.out.println(
                             (Math.round((10000.0 * i) / PIXEL_COUNT) / 100) + "%"
                                     + ", " + availabilities
-                                    + ", Elapsed: " + display(elapsedTime)
-                                    + ", Remaining: " + display(remainingTime)
+                                    + ", Elapsed: " + Data.formatTime(elapsedTime)
+                                    + ", Remaining: " + Data.formatTime(remainingTime)
                                     + " or " + ((PIXEL_COUNT - i) / progressThisChunk) + " Minutes");
-                    new ImageSpitter().spitImage(canvas, "snapshot");
+                    spitter.spitImage(canvas, "snapshot");
                 }
             }
 
             int thisColour = allColours[i];
             Point bestPoint = availabilities.removeBest(thisColour);
             averages[bestPoint.x][bestPoint.y] = UNSET;
-
-//            data[bestPoint.x][bestPoint.y] = thisColour;
-            canvas.setPixel(bestPoint, thisColour);
+            canvas[bestPoint.x][bestPoint.y] = thisColour;
 
             for (Point neighbour : neighbours(bestPoint, imageWidth, imageHeight)) {
-                if (canvas.getPixel(neighbour) == UNSET) {
+                if (canvas[neighbour.x][neighbour.y] == UNSET) {
                     int currentAverage = averages[neighbour.x][neighbour.y];
                     if (currentAverage != UNSET) {
                         availabilities.remove(currentAverage, neighbour);
@@ -76,10 +73,10 @@ class MountainsLettuceLightningSpace {
         System.out.println("Final image rendered.");
     }
 
-    private static int averageColour(List<Point> neighbours, Canvas canvas) {
+    private static int averageColour(List<Point> neighbours, int[][] canvas) {
         int red = 0, grn = 0, blu = 0, count = 0;
         for (Point neighbour : neighbours) {
-            int rgb = canvas.getPixel(neighbour);
+            int rgb = canvas[neighbour.x][neighbour.y];
             if (rgb != UNSET) {
                 red += (rgb >> 16) & 0xFF;
                 grn += (rgb >> 8) & 0xFF;
@@ -108,28 +105,6 @@ class MountainsLettuceLightningSpace {
             }
         }
         return output;
-    }
-
-    // TODO: move this
-    public static String display(long millis) {
-        double duration = millis;
-        String unit = "Millisecond";
-        if (duration >= 1000) {
-            duration /= 1000;
-            unit = "Second";
-            if (duration >= 60) {
-                duration /= 60;
-                unit = "Minute";
-                if (duration >= 60) {
-                    duration /= 60;
-                    unit = "Hour";
-                }
-            }
-        }
-        if (duration > 1) {
-            unit += "s";
-        }
-        return String.format("%4.2f %s", duration, unit);
     }
 
 }

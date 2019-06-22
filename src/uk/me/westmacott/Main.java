@@ -13,7 +13,7 @@ public class Main {
 
     public static void main(String[] args) throws IOException {
 
-        final Canvas canvas = new Canvas(IMAGE_SIZE * 2, IMAGE_SIZE);
+        final int[][] canvas = Data.newArray(IMAGE_SIZE * 2, IMAGE_SIZE);
         final Availabilities availabilities = new Availabilities();
 
         System.out.println("Seeding image...");
@@ -27,16 +27,18 @@ public class Main {
 
         {
             for (double theta = 0; theta < TAU; theta += 0.1) {
-                int x = (canvas.getWidth() / 2) + (int)(2000 * Math.sin(theta));
-                int y = (canvas.getHeight() / 2) + (int)(2000 * Math.cos(theta));
+                int x = (canvas.length / 2) + (int)(2000 * Math.sin(theta));
+                int y = (canvas[0].length / 2) + (int)(2000 * Math.cos(theta));
                 int colour = Color.getHSBColor((float) (theta / TAU), 1.0f, 1.0f).getRGB() & 0xFFFFFF;
                 availabilities.add(colour, new Point(x, y));
             }
         }
 
-
-        new MountainsLettuceLightningSpace().render(ColourSeries.SHUFFLED, availabilities, canvas, new ImageSpitter());
-
+        new MountainsLettuceLightningSpace().render(
+                ColourSeries.BY_HUE,
+                availabilities,
+                canvas,
+                new ImageSpitter("renders"));
     }
 
 }
