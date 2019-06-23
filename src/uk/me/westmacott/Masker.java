@@ -1,9 +1,15 @@
 package uk.me.westmacott;
 
+import javax.imageio.ImageIO;
+import java.awt.*;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
+import java.util.List;
 import java.util.function.BiFunction;
+import java.util.stream.Collectors;
 
-import static uk.me.westmacott.Constants.MASKED;
-import static uk.me.westmacott.Constants.UNSET;
+import static uk.me.westmacott.Constants.*;
 
 public enum Masker {
 
@@ -40,9 +46,89 @@ public enum Masker {
                 int offsetY = y - midY;
                 int rSquared = (offsetX * offsetX + offsetY * offsetY);
                 return innerLimit < rSquared && rSquared < outerLimit
-                        && Math.abs(offsetX) > factor / 10
-                        && Math.abs(offsetY) > factor / 10;
+                        && Math.abs(offsetX) > factor / 20
+                        && Math.abs(offsetY) > factor / 20;
             });
+        }
+    },
+    DOUBLE_GAPPED_RING() {
+        @Override
+        public void mask(int[][] canvas) {
+
+            int width = Data.width(canvas);
+            int height = Data.height(canvas);
+            int factor = Math.min(width, height);
+            BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+            Graphics2D graphics = (Graphics2D) image.getGraphics();
+            graphics.setColor(Color.WHITE);
+            graphics.fillRect(0,0,width,height);
+            graphics.setColor(Color.BLACK);
+
+            List<Point> points = Data.circle(width/2, height/2, factor/3,0, TAU/6).collect(Collectors.toList());
+            int[] xs = points.stream().mapToInt(p -> p.x).toArray();
+            int[] ys = points.stream().mapToInt(p -> p.y).toArray();
+            graphics.setStroke(new BasicStroke(factor / 20));
+            graphics.drawPolygon(xs, ys, points.size());
+
+            graphics.setColor(Color.WHITE);
+            graphics.setStroke(new BasicStroke(factor / 19));
+            for (int i = 0; i < xs.length; i++) {
+                graphics.drawLine(
+                        (int)(xs[i] * 0.6 + xs[(i+1)%xs.length] * 0.4),
+                        (int)(ys[i] * 0.6 + ys[(i+1)%xs.length] * 0.4),
+                        (int)(xs[i] * 0.4 + xs[(i+1)%xs.length] * 0.6),
+                        (int)(ys[i] * 0.4 + ys[(i+1)%xs.length] * 0.6)
+                        );
+            }
+
+            try {
+                ImageIO.write(image, "png", new File("marker-test-0.png"));
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+
+            maskWhere(canvas, (x,y) -> image.getRGB(x, y) == Color.BLACK.getRGB());
+        }
+    },
+    GAPPED_HEXAGON() {
+        @Override
+        public void mask(int[][] canvas) {
+
+            int width = Data.width(canvas);
+            int height = Data.height(canvas);
+            int factor = Math.min(width, height);
+            BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+            Graphics2D graphics = (Graphics2D) image.getGraphics();
+            graphics.setColor(Color.WHITE);
+            graphics.fillRect(0,0,width,height);
+            graphics.setColor(Color.BLACK);
+
+            List<Point> points = Data.circle(width/2, height/2, factor/3,0, TAU/6).collect(Collectors.toList());
+            int[] xs = points.stream().mapToInt(p -> p.x).toArray();
+            int[] ys = points.stream().mapToInt(p -> p.y).toArray();
+            graphics.setStroke(new BasicStroke(factor / 20));
+            graphics.drawPolygon(xs, ys, points.size());
+
+            graphics.setColor(Color.WHITE);
+            graphics.setStroke(new BasicStroke(factor / 19));
+            for (int i = 0; i < xs.length; i++) {
+                graphics.drawLine(
+                        (int)(xs[i] * 0.6 + xs[(i+1)%xs.length] * 0.4),
+                        (int)(ys[i] * 0.6 + ys[(i+1)%xs.length] * 0.4),
+                        (int)(xs[i] * 0.4 + xs[(i+1)%xs.length] * 0.6),
+                        (int)(ys[i] * 0.4 + ys[(i+1)%xs.length] * 0.6)
+                );
+            }
+
+            try {
+                ImageIO.write(image, "png", new File("marker-test-0.png"));
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+
+            maskWhere(canvas, (x,y) -> image.getRGB(x, y) == Color.BLACK.getRGB());
         }
     };
 

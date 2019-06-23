@@ -20,7 +20,6 @@ class MountainsLettuceLightningSpace {
 
         final int imageWidth = Data.width(canvas);
         final int imageHeight = Data.height(canvas);
-        final int debugTime = 10_000;
 
         System.out.println("Masking...");
         masker.mask(canvas);

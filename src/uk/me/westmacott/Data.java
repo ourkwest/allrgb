@@ -1,12 +1,16 @@
 package uk.me.westmacott;
 
+import java.awt.*;
 import java.io.*;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.stream.DoubleStream;
+import java.util.stream.Stream;
 
+import static uk.me.westmacott.Constants.TAU;
 import static uk.me.westmacott.Constants.UNSET;
 
 /**
@@ -107,6 +111,12 @@ class Data {
             unit += "s";
         }
         return String.format("%4.2f %s", duration, unit);
+    }
+
+    static Stream<Point> circle(int x, int y, int radius, double startAngle, double increment) {
+        return DoubleStream.iterate(startAngle, d -> d + increment)
+                .limit((long) (TAU / increment))
+                .mapToObj(d -> new Point((int)(x + radius * Math.cos(d)),(int)(y + radius * Math.sin(d))));
     }
 
 }

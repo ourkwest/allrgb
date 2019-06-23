@@ -23,11 +23,21 @@ public enum Seeder {
             list.forEach(x -> seed(availabilities, canvas, x, 0, Color.BLACK));
         }
     },
+    GREY_CORNERS() {
+        public void seed(AvailablePointsByTargetColour availabilities, int[][] canvas) {
+            int width = Data.width(canvas) - 1;
+            int height = Data.height(canvas) - 1;
+            seed(availabilities, canvas, 0, 0, Color.GRAY);
+            seed(availabilities, canvas, width, 0, Color.GRAY);
+            seed(availabilities, canvas, 0, height, Color.GRAY);
+            seed(availabilities, canvas, width, height, Color.GRAY);
+        }
+    },
     CIRCLE_OF_COLOUR() {
         public void seed(AvailablePointsByTargetColour availabilities, int[][] canvas) {
             int width = Data.width(canvas);
             int height = Data.height(canvas);
-            int radius = (int) (Math.min(width, height) * 0.9);
+            int radius = (int) (Math.min(width, height) * 0.45);
             for (double theta = 0; theta < TAU; theta += 0.1) {
                 int x = (width / 2) + (int)(radius * Math.sin(theta));
                 int y = (height / 2) + (int)(radius * Math.cos(theta));
