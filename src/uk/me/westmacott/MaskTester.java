@@ -12,7 +12,7 @@ public class MaskTester {
 
     public static void main(String[] args) throws IOException {
 
-        Masker testSubject = Masker.DOUBLE_GAPPED_RING;
+        Masker testSubject = Masker.HEXAGONAL_PATTERN;
 
         int[][] canvas = Data.newArray(1400, 1000);
         testSubject.mask(canvas);

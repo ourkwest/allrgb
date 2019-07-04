@@ -53,43 +53,7 @@ public enum Masker {
     },
     DOUBLE_GAPPED_RING() {
         @Override
-        public void mask(int[][] canvas) {
-
-            int width = Data.width(canvas);
-            int height = Data.height(canvas);
-            int factor = Math.min(width, height);
-            BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
-            Graphics2D graphics = (Graphics2D) image.getGraphics();
-            graphics.setColor(Color.WHITE);
-            graphics.fillRect(0,0,width,height);
-            graphics.setColor(Color.BLACK);
-
-            List<Point> points = Data.circle(width/2, height/2, factor/3,0, TAU/6).collect(Collectors.toList());
-            int[] xs = points.stream().mapToInt(p -> p.x).toArray();
-            int[] ys = points.stream().mapToInt(p -> p.y).toArray();
-            graphics.setStroke(new BasicStroke(factor / 20));
-            graphics.drawPolygon(xs, ys, points.size());
-
-            graphics.setColor(Color.WHITE);
-            graphics.setStroke(new BasicStroke(factor / 19));
-            for (int i = 0; i < xs.length; i++) {
-                graphics.drawLine(
-                        (int)(xs[i] * 0.6 + xs[(i+1)%xs.length] * 0.4),
-                        (int)(ys[i] * 0.6 + ys[(i+1)%xs.length] * 0.4),
-                        (int)(xs[i] * 0.4 + xs[(i+1)%xs.length] * 0.6),
-                        (int)(ys[i] * 0.4 + ys[(i+1)%xs.length] * 0.6)
-                        );
-            }
-
-            try {
-                ImageIO.write(image, "png", new File("marker-test-0.png"));
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-
-
-            maskWhere(canvas, (x,y) -> image.getRGB(x, y) == Color.BLACK.getRGB());
-        }
+        public void mask(int[][] canvas) {}
     },
     GAPPED_HEXAGON() {
         @Override
@@ -127,6 +91,61 @@ public enum Masker {
                 e.printStackTrace();
             }
 
+            maskWhere(canvas, (x,y) -> image.getRGB(x, y) == Color.BLACK.getRGB());
+        }
+    },
+    HEXAGONAL_PATTERN() {
+        @Override
+        public void mask(int[][] canvas) {
+
+            int width = Data.width(canvas);
+            int height = Data.height(canvas);
+            int factor = Math.min(width, height);
+            BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+            Graphics2D graphics = (Graphics2D) image.getGraphics();
+            graphics.setColor(Color.WHITE);
+            graphics.fillRect(0,0,width,height);
+            graphics.setColor(Color.BLACK);
+
+            List<Point> points = Data.circle(width/2, height/2, factor/3,0, TAU/6).collect(Collectors.toList());
+            int[] xs = points.stream().mapToInt(p -> p.x).toArray();
+            int[] ys = points.stream().mapToInt(p -> p.y).toArray();
+            graphics.setStroke(new BasicStroke(factor / 20));
+            graphics.drawPolygon(xs, ys, points.size());
+
+            graphics.setColor(Color.WHITE);
+            graphics.setStroke(new BasicStroke(factor / 19));
+            for (int i = 0; i < xs.length; i++) {
+                graphics.drawLine(
+                        (int)(xs[i] * 0.6 + xs[(i+1)%xs.length] * 0.4),
+                        (int)(ys[i] * 0.6 + ys[(i+1)%xs.length] * 0.4),
+                        (int)(xs[i] * 0.4 + xs[(i+1)%xs.length] * 0.6),
+                        (int)(ys[i] * 0.4 + ys[(i+1)%xs.length] * 0.6)
+                );
+            }
+
+            graphics.setColor(Color.BLACK);
+            points = Data.circle(width/2, height/2, (int) (factor/2.5),TAU/12, TAU/6).collect(Collectors.toList());
+            xs = points.stream().mapToInt(p -> p.x).toArray();
+            ys = points.stream().mapToInt(p -> p.y).toArray();
+            int size = factor / 20;
+            for (int i = 0; i < xs.length; i++) {
+                graphics.fillOval(xs[i] - size, ys[i] - size, 2*size, 2*size);
+            }
+
+            points = Data.circle(width/2, height/2, factor/5,TAU/12, TAU/6).collect(Collectors.toList());
+            xs = points.stream().mapToInt(p -> p.x).toArray();
+            ys = points.stream().mapToInt(p -> p.y).toArray();
+            size = factor / 26;
+            for (int i = 0; i < xs.length; i++) {
+                graphics.fillOval(xs[i] - size, ys[i] - size, 2*size, 2*size);
+            }
+
+            try {
+                ImageIO.write(image, "png", new File("marker-test-0.png"));
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
 
             maskWhere(canvas, (x,y) -> image.getRGB(x, y) == Color.BLACK.getRGB());
         }

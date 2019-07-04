@@ -46,6 +46,12 @@ enum ColourSeries {
             return getAllColoursOrdered(ColourSeries.bySaturation);
         }
     },
+    BY_BRIGHTNESS() {
+        @Override
+        int[] getOrderedColours() {
+            return getAllColoursOrdered(ColourSeries.byBrightness);
+        }
+    },
     BY_HUE() {
         @Override
         int[] getOrderedColours() {
@@ -62,6 +68,7 @@ enum ColourSeries {
 
     private static final Comparator<Integer> byHue = Comparator.comparingInt(ColourSeries::getHue);
     private static final Comparator<Integer> bySaturation = Comparator.comparingInt(ColourSeries::getSaturation);
+    private static final Comparator<Integer> byBrightness = Comparator.comparingInt(ColourSeries::getBrightness);
 
     private static int getHue(int rgb) {
         int red = (rgb >> 16) & 0xFF;
@@ -97,6 +104,13 @@ enum ColourSeries {
         int green = (rgb >> 8) & 0xFF;
         int blue = rgb & 0xFF;
         return (int) (1000.0f * Color.RGBtoHSB(red, green, blue, new float[3])[1]);
+    }
+
+    private static int getBrightness(Integer rgb) {
+        int red = (rgb >> 16) & 0xFF;
+        int green = (rgb >> 8) & 0xFF;
+        int blue = rgb & 0xFF;
+        return red + green + blue;
     }
 
     private static int[] getAllColoursOrdered(Comparator<Integer> ordering) {

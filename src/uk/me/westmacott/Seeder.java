@@ -16,6 +16,11 @@ public enum Seeder {
             seed(availabilities, canvas, Data.width(canvas) / 2, Data.height(canvas) / 2, Color.GRAY);
         }
     },
+    TOP_LEFT_ISH_DOT() {
+        public void seed(AvailablePointsByTargetColour availabilities, int[][] canvas) {
+            seed(availabilities, canvas, Data.width(canvas) / 3, Data.height(canvas) / 3, Color.GRAY);
+        }
+    },
     BLACK_TOP_ROW() {
         public void seed(AvailablePointsByTargetColour availabilities, int[][] canvas) {
             List<Integer> list = IntStream.range(0, Data.width(canvas)).boxed().collect(Collectors.toList());

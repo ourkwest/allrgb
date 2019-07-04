@@ -12,14 +12,14 @@ public class Main {
 
     public static void main(String[] args) throws IOException {
 
-        final int[][] canvas = Data.newArray((int) (IMAGE_SIZE * GOLDEN_RATIO), IMAGE_SIZE);
+        final int[][] canvas = Data.newArray((int) (IMAGE_SIZE * 1.1), IMAGE_SIZE);
         final AvailablePointsByTargetColour availabilities = new AvailablePointsByTargetColour();
 
         new MountainsLettuceLightningSpace().render(
-                ColourSeries.INTERLEAVED,
+                ColourSeries.BY_BRIGHTNESS,
                 availabilities,
-                Masker.GAPPED_HEXAGON,
-                Seeder.CIRCLE_OF_COLOUR,
+                Masker.HEXAGONAL_PATTERN,
+                Seeder.TOP_LEFT_ISH_DOT,
                 canvas,
                 new ImageSpitter("renders"));
     }
