@@ -9,7 +9,7 @@ import java.util.stream.IntStream;
 
 import static uk.me.westmacott.Constants.PIXEL_COUNT;
 
-enum ColourSeries {
+public enum ColourSeries {
 
     INTERLEAVED() {
         @Override
@@ -70,14 +70,14 @@ enum ColourSeries {
     private static final Comparator<Integer> bySaturation = Comparator.comparingInt(ColourSeries::getSaturation);
     private static final Comparator<Integer> byBrightness = Comparator.comparingInt(ColourSeries::getBrightness);
 
-    private static int getHue(int rgb) {
+    public static int getHue(int rgb) {
         int red = (rgb >> 16) & 0xFF;
         int green = (rgb >> 8) & 0xFF;
         int blue = rgb & 0xFF;
         return getHue(red, green, blue);
     }
 
-    private static int getHue(int red, int green, int blue) {
+    public static int getHue(int red, int green, int blue) {
 
         float min = Math.min(Math.min(red, green), blue);
         float max = Math.max(Math.max(red, green), blue);
@@ -99,14 +99,14 @@ enum ColourSeries {
         return Math.round(hue);
     }
 
-    private static int getSaturation(Integer rgb) {
+    public static int getSaturation(Integer rgb) {
         int red = (rgb >> 16) & 0xFF;
         int green = (rgb >> 8) & 0xFF;
         int blue = rgb & 0xFF;
         return (int) (1000.0f * Color.RGBtoHSB(red, green, blue, new float[3])[1]);
     }
 
-    private static int getBrightness(Integer rgb) {
+    public static int getBrightness(Integer rgb) {
         int red = (rgb >> 16) & 0xFF;
         int green = (rgb >> 8) & 0xFF;
         int blue = rgb & 0xFF;

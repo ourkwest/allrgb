@@ -22,7 +22,15 @@ public class AvailablePointsByTargetColour {
         return colours.size() == 0;
     }
 
-    void add(int colour, Point point) {
+    public void add(Color colour, int x, int y) {
+        add(colour.getRGB() & 0xFFFFFF, x, y);
+    }
+
+    public void add(int colour, int x, int y) {
+        add(colour, new Point(x, y));
+    }
+
+    public void add(int colour, Point point) {
         colours.add(colour);
         pointsByColour.computeIfAbsent(colour, x -> new LinkedList<>()).addFirst(point);
         pointCount++;

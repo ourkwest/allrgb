@@ -6,22 +6,22 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-class ImageSpitter {
+public class ImageSpitter {
 
     private final Path directory;
     private final Integer renderingNumber;
 
-    ImageSpitter() {
+    public ImageSpitter() {
         this(".");
     }
 
-    ImageSpitter(String directory) {
+    public ImageSpitter(String directory) {
         this.directory = Paths.get(directory);
         this.directory.toFile().mkdirs();
         this.renderingNumber = Data.readAndWrite("Number", () -> 0, i -> i + 1);
     }
 
-    void spitImage(int[][] canvas, Object suffix) throws IOException {
+    public void spitImage(int[][] canvas, Object suffix) throws IOException {
         int width = canvas.length;
         int height = canvas[0].length;
         BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
