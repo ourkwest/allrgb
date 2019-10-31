@@ -1,7 +1,9 @@
 (ns uk.me.westmacott.core
   (:import [uk.me.westmacott Constants AvailablePointsByTargetColour ImageSpitter MountainsLettuceLightningSpace ColourSeries]
-           [java.awt Color Point]
-           [java.util Arrays]))
+           [java.awt Color Point Polygon]
+           [java.util Arrays Random]
+           [java.awt.geom Area]
+           [java.lang Math$RandomNumberGeneratorHolder]))
 
 
 (defn new-unset-2d-int-array [width height]
@@ -9,6 +11,25 @@
     (doseq [array-1d array-2d]
       (Arrays/fill ^"[I" array-1d Constants/UNSET))
     array-2d))
+
+(defn width [canvas] (alength canvas))
+(defn height [canvas] (alength (aget canvas 0)))
+
+(defn polygon [x y r n angle]
+  (let [angles (->> (range 0 Constants/TAU (/ Constants/TAU n))
+                    (map (partial + angle)))
+        xs (map #(-> % Math/sin (* r) (+ x)) angles)
+        ys (map #(-> % Math/cos (* r) (+ y)) angles)]
+    (Polygon. (int-array xs) (int-array ys) (count xs))))
+
+(defn shape-subtract [shape-a shape-b]
+  (doto (Area. shape-a)
+    (.subtract (Area. shape-b))))
+
+(defn set-random-seed [seed]
+  (let [field (.getDeclaredField Math$RandomNumberGeneratorHolder "randomNumberGenerator")]
+    (.setAccessible field true)
+    (.setSeed ^Random (.get field nil) seed)))
 
 (defn render
   "Takes:
@@ -21,13 +42,15 @@
         - availabilities is an AvailablePointsByTargetColour
    Produces:
     a rendered image in a local `clj-renders` directory"
-  [width height colour-sorter canvas-preparer]
+  [width height colour-sorter canvas-preparer & [random-seed]]
   (let [canvas (new-unset-2d-int-array width height)
         colours (colour-sorter (map int (range Constants/PIXEL_COUNT)))
         available (AvailablePointsByTargetColour.)
         spitter (ImageSpitter. "clj-renders")]
 
+    (when random-seed (set-random-seed random-seed))
     (canvas-preparer canvas available)
+    (.spitMask spitter canvas "mask" Color/BLACK)
 
     (MountainsLettuceLightningSpace/render canvas colours available spitter)))
 
@@ -50,4 +73,5 @@
             #(sort-by (fn [i] (ColourSeries/getHue i)) %)
             (fn [_canvas available]
               (seed-random-points available width height 10)
-              available))))
+              available)
+            0)))
