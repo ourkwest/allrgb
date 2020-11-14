@@ -53,7 +53,7 @@
         prep-fn (three-shapes-disjointed shape-size gap-size)]
 
     #_(masking/preview-masking width height prep-fn)
-    (core/render width height
+    (core/render-sorter width height
                  sorters/by-saturation
                  (three-shapes-disjointed shape-size gap-size))))
 

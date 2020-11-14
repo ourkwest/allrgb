@@ -4,6 +4,7 @@ import java.awt.*;
 import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.function.Function;
 import java.util.stream.StreamSupport;
 
 import static uk.me.westmacott.Constants.*;
@@ -17,22 +18,33 @@ public class MountainsLettuceLightningSpace {
         System.out.println(-10 % 90);
     }
 
+    public static void render (int[][] canvas,
+                               Iterable<Integer> colours,
+                               AvailablePointsByTargetColour availablePointsByTargetColour,
+                               ImageSpitter spitter) throws IOException {
+        render(canvas, colours, availablePointsByTargetColour, spitter, false);
+    }
+
     public static void render(int[][] canvas,
                               Iterable<Integer> colours,
                               AvailablePointsByTargetColour availablePointsByTargetColour,
-                              ImageSpitter spitter) throws IOException {
+                              ImageSpitter spitter,
+                              boolean wrap) throws IOException {
 
         final int imageWidth = Data.width(canvas);
         final int imageHeight = Data.height(canvas);
 
         final int[] allColours = StreamSupport.stream(colours.spliterator(), false).mapToInt(x -> x).toArray();
         final int[][] targets = Data.newArray(imageWidth, imageHeight);
+        final int totalColours = allColours.length;
+
+        final Function<Point, List<Point>> neighbourFinder = neighbourFinderFor(imageWidth, imageHeight, wrap);
 
         long start = System.currentTimeMillis();
 
         System.out.println("Iterating...");
-        System.out.println(new String(new char[PIXEL_COUNT / DEBUG_EVERY]).replace("\0", "_"));
-        for (int i = 0; i < PIXEL_COUNT; i++) {
+        System.out.println(new String(new char[totalColours / DEBUG_EVERY]).replace("\0", "_"));
+        for (int i = 0; i < totalColours; i++) {
 
             if (i % DEBUG_EVERY == 0) {
                 System.out.print("#");
@@ -43,7 +55,7 @@ public class MountainsLettuceLightningSpace {
 
             if (availablePointsByTargetColour.empty()) {
                 System.out.println();
-                System.out.println("AvailablePointsByTargetColour exhausted!");
+                System.out.println("AvailablePointsByTargetColour exhausted! (i = " + i + ")");
                 break;
             }
 
@@ -52,13 +64,13 @@ public class MountainsLettuceLightningSpace {
             targets[bestPoint.x][bestPoint.y] = UNSET;
             canvas[bestPoint.x][bestPoint.y] = thisColour;
 
-            for (Point neighbour : neighbours(bestPoint, imageWidth, imageHeight)) {
+            for (Point neighbour : neighbourFinder.apply(bestPoint)) {
                 if (canvas[neighbour.x][neighbour.y] == UNSET) {
                     int currentAverage = targets[neighbour.x][neighbour.y];
                     if (currentAverage != UNSET) {
                         availablePointsByTargetColour.remove(currentAverage, neighbour);
                     }
-                    int newAverage = averageColour(neighbours(neighbour, imageWidth, imageHeight), canvas);
+                    int newAverage = averageColour(neighbourFinder.apply(neighbour), canvas);
                     availablePointsByTargetColour.add(newAverage, neighbour);
                     targets[neighbour.x][neighbour.y] = newAverage;
                 }
@@ -68,8 +80,8 @@ public class MountainsLettuceLightningSpace {
         System.out.println("All colours rendered.");
         System.out.println("Iteration time: " + (System.currentTimeMillis() - start) / 1000 + " seconds");
 
-        spitter.spitImage(canvas, "final");
-        System.out.println("Final image rendered.");
+        String finalImageName = spitter.spitImage(canvas, "final");
+        System.out.println("Final image rendered: " + finalImageName);
     }
 
     private static int averageColour(List<Point> neighbours, int[][] canvas) {
@@ -94,16 +106,29 @@ public class MountainsLettuceLightningSpace {
             new Point(-1,  0),                    new Point( 1,  0),
             new Point(-1,  1), new Point( 0,  1), new Point( 1,  1)};
 
-    private static List<Point> neighbours(Point input, int imageWidth, int imageHeight) {
-        List<Point> output = new LinkedList<>();
-        for (Point neighbour : neighbours) {
-            int x = Math.floorMod(input.x + neighbour.x, imageWidth);
-            int y = Math.floorMod(input.y + neighbour.y, imageHeight);
-//            if (0 <= x && x < imageWidth && 0 <= y && y < imageHeight) {
-                output.add(new Point(x, y));
-//            }
+    private static Function<Point, List<Point>> neighbourFinderFor(int imageWidth, int imageHeight, boolean wrap) {
+        if (wrap) {
+            return input -> {
+                List<Point> output = new LinkedList<>();
+                for (Point neighbour : neighbours) {
+                    int x = Math.floorMod(input.x + neighbour.x, imageWidth);
+                    int y = Math.floorMod(input.y + neighbour.y, imageHeight);
+                    output.add(new Point(x, y));
+                }
+                return output;
+            };
         }
-        return output;
+        return input -> {
+            List<Point> output = new LinkedList<>();
+            for (Point neighbour : neighbours) {
+                int x = input.x + neighbour.x;
+                int y = input.y + neighbour.y;
+                if (0 <= x && x < imageWidth && 0 <= y && y < imageHeight) {
+                    output.add(new Point(x, y));
+                }
+            }
+            return output;
+        };
     }
 
 }

@@ -79,7 +79,7 @@
     #_
     (masking/preview-masking width height prep-fn)
     ;#_
-    (core/render width height
+    (core/render-sorter width height
                  sorters/by-hue
                  prep-fn
                  0)))

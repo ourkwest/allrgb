@@ -22,7 +22,7 @@ public class ImageSpitter {
         this.renderingNumber = Data.readAndWrite("Number", () -> 0, i -> i + 1);
     }
 
-    public void spitImage(int[][] canvas, Object suffix) throws IOException {
+    public String spitImage(int[][] canvas, Object suffix) throws IOException {
         int width = canvas.length;
         int height = canvas[0].length;
         BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
@@ -36,9 +36,10 @@ public class ImageSpitter {
         }
         String filename = String.format("Render_%03d-%s.png", renderingNumber, suffix);
         ImageIO.write(image, "png", directory.resolve(filename).toFile());
+        return filename;
     }
 
-    public void spitMask(int[][] canvas, Object suffix, Color maskColour) throws IOException {
+    public String spitMask(int[][] canvas, Object suffix, Color maskColour) throws IOException {
         int width = canvas.length;
         int height = canvas[0].length;
         BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
@@ -53,6 +54,7 @@ public class ImageSpitter {
         }
         String filename = String.format("Render_%03d-%s.png", renderingNumber, suffix);
         ImageIO.write(image, "png", directory.resolve(filename).toFile());
+        return filename;
     }
 
 }

@@ -2,7 +2,7 @@
   :description "Render maximally colourful images."
   :url ""
   :license {:name "None"}
-  :dependencies [[org.clojure/clojure "1.9.0"]]
+  :dependencies [[org.clojure/clojure "1.10.1"]]
   :plugins []
   :repositories {}
 

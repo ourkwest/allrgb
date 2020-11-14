@@ -60,6 +60,8 @@ public enum ColourSeries {
     };
 
     public int[] asIntArray() {
+
+        Color c = new Color(150, 0, 255);
         String name = this.getClass().getEnclosingClass().getCanonicalName() + "." + this.name();
         return Data.readOrWrite(name, this::getOrderedColours);
     }
