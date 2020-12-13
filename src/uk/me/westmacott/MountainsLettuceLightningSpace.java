@@ -18,18 +18,19 @@ public class MountainsLettuceLightningSpace {
         System.out.println(-10 % 90);
     }
 
-    public static void render (int[][] canvas,
-                               Iterable<Integer> colours,
-                               AvailablePointsByTargetColour availablePointsByTargetColour,
-                               ImageSpitter spitter) throws IOException {
-        render(canvas, colours, availablePointsByTargetColour, spitter, false);
-    }
+//    public static void render (int[][] canvas,
+//                               Iterable<Integer> colours,
+//                               AvailablePointsByTargetColour availablePointsByTargetColour,
+//                               ImageSpitter spitter) throws IOException {
+//        render(canvas, colours, availablePointsByTargetColour, spitter, false, Echo.NoopEcho());
+//    }
 
     public static void render(int[][] canvas,
                               Iterable<Integer> colours,
                               AvailablePointsByTargetColour availablePointsByTargetColour,
                               ImageSpitter spitter,
-                              boolean wrap) throws IOException {
+                              boolean wrap,
+                              Echo echo) throws IOException {
 
         final int imageWidth = Data.width(canvas);
         final int imageHeight = Data.height(canvas);
@@ -63,6 +64,7 @@ public class MountainsLettuceLightningSpace {
             Point bestPoint = availablePointsByTargetColour.removeClosest(thisColour);
             targets[bestPoint.x][bestPoint.y] = UNSET;
             canvas[bestPoint.x][bestPoint.y] = thisColour;
+            echo.echo(canvas, bestPoint);
 
             for (Point neighbour : neighbourFinder.apply(bestPoint)) {
                 if (canvas[neighbour.x][neighbour.y] == UNSET) {

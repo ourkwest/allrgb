@@ -101,4 +101,4 @@
 (defn render []
   (let [width (int (* Constants/IMAGE_SIZE 1.5))
         height (int (* Constants/IMAGE_SIZE 1.25))]
-    (core/render width height brown-then-green (canvas-preparer width height) 0)))
+    (core/render-opts width height brown-then-green (canvas-preparer width height) 0)))

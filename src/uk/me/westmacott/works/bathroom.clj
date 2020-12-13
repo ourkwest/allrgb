@@ -106,24 +106,24 @@
         shuffled-greens (shuffle greens)
         wavy-prep (wavy-line tile-size tile-pattern 1 shuffled-greens green-theta-offset 0.4)
         sharp-prep (sharp-wave tile-size 1 greens (/ tile-size 10) green-theta-offset 0.4)]
-    (core/render width height shuffled-greens wavy-prep 0 true)
-    (core/render width height greens sharp-prep 0 true)))
+    (core/render-opts width height shuffled-greens wavy-prep 0 true)
+    (core/render-opts width height greens sharp-prep 0 true)))
 
 (defn render-pink []
   (let [pinks (take-nth 2 (sorters/colours-closest-to (.getRGB (Color. 255 0 255 0)) 0.06))
         shuffled-pinks (shuffle pinks)
         wavy-prep (wavy-line tile-size tile-pattern 1 shuffled-pinks pink-theta-offset 0.1)
         sharp-prep (sharp-wave tile-size 1 pinks (/ tile-size 20) pink-theta-offset 0.1)]
-    (core/render width height shuffled-pinks wavy-prep 0 true)
-    (core/render width height pinks sharp-prep 0 true)))
+    (core/render-opts width height shuffled-pinks wavy-prep 0 true)
+    (core/render-opts width height pinks sharp-prep 0 true)))
 
 (defn render-dark-green []
   (let [colours (sorters/colours-closest-to (.getRGB (Color. 0 100 0 0)) 0.05) ;0.04?
         shuffled-colours (shuffle colours)
         wavy-prep (wavy-line tile-size tile-pattern 1 shuffled-colours dark-theta-offset 0.2)
         sharp-prep (sharp-wave tile-size 1 colours (/ tile-size 10) dark-theta-offset 0.2)]
-    (core/render width height shuffled-colours wavy-prep 0 true)
-    (core/render width height colours sharp-prep 0 true)))
+    (core/render-opts width height shuffled-colours wavy-prep 0 true)
+    (core/render-opts width height colours sharp-prep 0 true)))
 
 (defn render-florets []
   (let [greens (sorters/colours-closest-to (.getRGB (Color. 50 255 0 0)) 0.05)
@@ -133,7 +133,7 @@
         floret-prep (florets green-theta-offset 0.4)
         ]
     (masking/preview-masking width height floret-prep 0)
-    #_(core/render width height colours floret-prep 0 true)
+    #_(core/render-opts width height colours floret-prep 0 true)
     ))
 
 
@@ -176,8 +176,8 @@
     #_(println (take 10 purples))
 
     #_(masking/preview-masking width height prep-canvas)
-    (core/render width height purples
-                 prep-canvas 0 true)))
+    (core/render-opts width height purples
+                      prep-canvas 0 true)))
 
 (defn render-alpha [theta-offset-proportion]
   (let [image (BufferedImage. width height BufferedImage/TYPE_INT_ARGB)

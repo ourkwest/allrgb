@@ -77,7 +77,7 @@
         ]
 
     #_(masking/preview-masking width height prep-fn)
-    (core/render width height
-                 all-colours
-                 prep-fn)))
+    (core/render-opts width height
+                      all-colours
+                      prep-fn)))
 

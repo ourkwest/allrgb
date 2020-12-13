@@ -1,5 +1,5 @@
 (ns uk.me.westmacott.core
-  (:import [uk.me.westmacott Constants AvailablePointsByTargetColour ImageSpitter MountainsLettuceLightningSpace ColourSeries]
+  (:import [uk.me.westmacott Constants AvailablePointsByTargetColour ImageSpitter MountainsLettuceLightningSpace ColourSeries Echo]
            [java.awt Color Point Polygon]
            [java.util Arrays Random]
            [java.awt.geom Area]
@@ -43,10 +43,14 @@
         - availabilities is an AvailablePointsByTargetColour
    Produces:
     a rendered image in a local `clj-renders` directory"
-  [width height colours canvas-preparer & [random-seed wrap spitter]]
+  [width height colours-fn canvas-preparer
+   & {:keys [random-seed wrap spitter echo]
+      :or   {random-seed false
+             wrap        false
+             spitter     (ImageSpitter. "clj-renders")
+             echo        (Echo/NoopEcho)}}]
   (let [canvas (new-unset-2d-int-array width height)
-        available (AvailablePointsByTargetColour.)
-        spitter (or spitter (ImageSpitter. "clj-renders"))]
+        available (AvailablePointsByTargetColour.)]
 
     (when random-seed (set-random-seed random-seed))
     (println "Preparing canvas...")
@@ -54,11 +58,16 @@
     (println "Prepared canvas.")
     (.spitMask spitter canvas "mask" Color/BLACK)
 
-    (MountainsLettuceLightningSpace/render canvas colours available spitter (boolean wrap))))
+    (MountainsLettuceLightningSpace/render canvas (colours-fn) available spitter (boolean wrap) echo)))
+
+(defn render-opts [width height colours canvas-preparer & [random-seed wrap spitter]]
+  (render width height (constantly colours) canvas-preparer {:random-seed random-seed
+                                                             :wrap        wrap
+                                                             :spitter     spitter}))
 
 (defn render-sorter [width height colour-sorter canvas-preparer & [random-seed wrap]]
   (let [colours (colour-sorter (map int (range Constants/PIXEL_COUNT)))]
-    (render width height colours canvas-preparer random-seed wrap)))
+    (render-opts width height colours canvas-preparer random-seed wrap)))
 
 (defn seed-2-corners [available width height]
   (doto available
