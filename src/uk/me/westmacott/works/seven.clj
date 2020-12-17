@@ -47,7 +47,7 @@
 (defn render []
   (let [width (* 3 Constants/IMAGE_SIZE)
         height (* 3 Constants/IMAGE_SIZE)
-        colours #(partial-shuffle (reverse these-colours) 1/8)
+        colours #(partial-shuffle (reverse these-colours) 1/10)
         canvas-prep (canvas-preparer width height)
         random-seed 1
         echo (build-echos width height)]
@@ -56,5 +56,5 @@
 
     (core/render width height colours canvas-prep
                  :random-seed random-seed
-                 :wrap false
+                 :wrap true
                  :echo echo)))

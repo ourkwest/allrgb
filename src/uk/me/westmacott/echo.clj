@@ -19,13 +19,11 @@
          (let [pointer-location @pointer
                old-x (aget xs pointer-location)
                old-y (aget ys pointer-location)
-               echo-x (+ old-x x-offset)
-               echo-y (+ old-y y-offset)]
+               echo-x (mod (+ old-x x-offset) width)
+               echo-y (mod (+ old-y y-offset) height)]
            (when (not= not-yet-used old-x)
              (.echo child-echo canvas (Point. echo-x echo-y))
-             (when (and (< -1 echo-x width)
-                        (< -1 echo-y height)
-                        (= Constants/UNSET (aget canvas echo-x echo-y)))
+             (when (= Constants/UNSET (aget canvas echo-x echo-y))
                (aset canvas echo-x echo-y (aget canvas old-x old-y))))
            (aset xs pointer-location (.-x point))
            (aset ys pointer-location (.-y point)))
