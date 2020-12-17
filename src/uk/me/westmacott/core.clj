@@ -61,9 +61,10 @@
     (MountainsLettuceLightningSpace/render canvas (colours-fn) available spitter (boolean wrap) echo)))
 
 (defn render-opts [width height colours canvas-preparer & [random-seed wrap spitter]]
-  (render width height (constantly colours) canvas-preparer {:random-seed random-seed
-                                                             :wrap        wrap
-                                                             :spitter     spitter}))
+  (render width height (constantly colours) canvas-preparer
+          :random-seed random-seed
+          :wrap wrap
+          :spitter spitter))
 
 (defn render-sorter [width height colour-sorter canvas-preparer & [random-seed wrap]]
   (let [colours (colour-sorter (map int (range Constants/PIXEL_COUNT)))]
