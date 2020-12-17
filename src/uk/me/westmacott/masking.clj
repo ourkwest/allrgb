@@ -34,7 +34,9 @@
      ~@drawing-instructions
      (println "finished masking drawing instructions")
      (if *preview*
-       (ImageIO/write image#, "png", (io/file (str "preview-masking-" *preview* ".png")))
+       (let [filename# (str "preview-masking-" *preview* ".png")]
+         (ImageIO/write image#, "png", (io/file filename#))
+         (println "Preview mask at:" filename#))
        (set-where ~canvas (fn [x# y#] (= (.getRGB image# x# y#) (.getRGB Color/WHITE))) Constants/MASKED))))
 
 (defn preview-masking [width height canvas-preparer & [random-seed]]
