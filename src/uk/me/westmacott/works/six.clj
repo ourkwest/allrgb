@@ -27,11 +27,32 @@
   (masking/with-masking-graphics [^Graphics2D g canvas]
     (masking/set-masking g)
     (.setStroke g (BasicStroke. 10))
-    (doseq [[[x1 y1] [x2 y2]] (drop-nth 100 2 (partition 2 1 (spiral width height)))]
-      (.drawLine g x1 y1 x2 y2))))
+    (let [spiral-points (spiral width height)
+          r-factor 1.2
+          span 104
+          gap 5
+          section (+ span gap)]
+      (doseq [[[x1 y1] [x2 y2]] (drop-nth span gap (partition 2 1 spiral-points))]
+        (.drawLine g x1 y1 x2 y2))
+
+      (let [[x y] (first spiral-points)
+            radius 15]
+        (.fillArc g (- x radius) (- y radius) (* radius 2) (* radius 2) 0 360))
+
+      (doseq [[idx [x y]] (map-indexed vector (take-nth section spiral-points))
+              :let [radius (* idx r-factor)]]
+        (.fillArc g (- x radius) (- y radius) (* radius 2) (* radius 2) 0 360))
+
+      (doseq [[idx [x y]] (map-indexed vector (take-nth section (drop span spiral-points)))
+              :let [radius (* (inc idx) r-factor)]]
+        (.fillArc g (- x radius) (- y radius) (* radius 2) (* radius 2) 0 360))
+
+      )))
 
 (defn seeding [^AvailablePointsByTargetColour available width height]
-  (.add available Color/BLACK (int (/ width 2)) (int (- (/ height 2) 10))))
+  (.add available Color/BLACK
+        (int (+ (/ width 2) 40))
+        (int (- (/ height 2) 0))))
 
 (defn canvas-preparer [width height]
   (let []
@@ -47,9 +68,12 @@
         canvas-prep (canvas-preparer width height)
         random-seed 1]
 
-    #_(masking/preview-masking width height canvas-prep 1)
+    ;(masking/preview-masking width height canvas-prep 1)
 
-    (core/render-opts width height colours
-                      canvas-prep random-seed :wrap)))
+    (core/render width height (constantly colours) canvas-prep
+                 :random-seed random-seed
+                 :wrap :wrap)
+
+    ))
 
 
