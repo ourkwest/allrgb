@@ -64,7 +64,7 @@
    (println "Finding closest colours...")
    (let [colour-count (* Constants/PIXEL_COUNT proportion)
          target-colour (if (instance? Color target-colour)
-                         (bit-and (.getRGB ^Color target-colour) 0xFFFFFF)
+                         (int (bit-and (.getRGB ^Color target-colour) 0xFFFFFF))
                          target-colour)
          r (bit-and 0xFF (bit-shift-right target-colour 16))
          g (bit-and 0xFF (bit-shift-right target-colour 8))

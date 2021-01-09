@@ -1,5 +1,5 @@
 (ns uk.me.westmacott.core
-  (:import [uk.me.westmacott Constants AvailablePointsByTargetColour ImageSpitter MountainsLettuceLightningSpace ColourSeries Echo]
+  (:import [uk.me.westmacott Constants AvailablePointsByTargetColour ImageSpitter MountainsLettuceLightningSpace ColourSeries Echo ImageSpitter$DirectorySpitter]
            [java.awt Color Point Polygon]
            [java.util Arrays Random]
            [java.awt.geom Area]
@@ -47,7 +47,7 @@
    & {:keys [random-seed wrap spitter echo]
       :or   {random-seed false
              wrap        false
-             spitter     (ImageSpitter. "clj-renders")
+             spitter     (ImageSpitter/defaultSpitter)
              echo        (Echo/NoopEcho)}}]
   (let [canvas (new-unset-2d-int-array width height)
         available (AvailablePointsByTargetColour.)]
@@ -56,9 +56,9 @@
     (println "Preparing canvas...")
     (canvas-preparer canvas available)
     (println "Prepared canvas.")
-    (.spitMask spitter canvas "mask" Color/BLACK)
-
-    (MountainsLettuceLightningSpace/render canvas (colours-fn) available spitter (boolean wrap) echo)))
+    {:mask (.spitMask spitter canvas Color/BLACK)
+     :colours (MountainsLettuceLightningSpace/render
+                canvas (colours-fn) available spitter (boolean wrap) echo)}))
 
 (defn render-opts [width height colours canvas-preparer & [random-seed wrap spitter]]
   (render width height (constantly colours) canvas-preparer

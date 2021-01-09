@@ -1,6 +1,7 @@
 package uk.me.westmacott;
 
 import java.awt.*;
+import java.io.File;
 import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
@@ -25,7 +26,7 @@ public class MountainsLettuceLightningSpace {
 //        render(canvas, colours, availablePointsByTargetColour, spitter, false, Echo.NoopEcho());
 //    }
 
-    public static void render(int[][] canvas,
+    public static File render(int[][] canvas,
                               Iterable<Integer> colours,
                               AvailablePointsByTargetColour availablePointsByTargetColour,
                               ImageSpitter spitter,
@@ -49,10 +50,8 @@ public class MountainsLettuceLightningSpace {
 
             if (i % DEBUG_EVERY == 0) {
                 System.out.print("#");
-                if (i % SNAPSHOT_EVERY == 0) {
-                    spitter.spitImage(canvas, "snapshot");
-                }
             }
+            spitter.spitImage(canvas, false);
 
             if (availablePointsByTargetColour.empty()) {
                 System.out.println();
@@ -82,8 +81,9 @@ public class MountainsLettuceLightningSpace {
         System.out.println("All colours rendered.");
         System.out.println("Iteration time: " + (System.currentTimeMillis() - start) / 1000 + " seconds");
 
-        String finalImageName = spitter.spitImage(canvas, "final");
-        System.out.println("Final image rendered: " + finalImageName);
+        File finalImageFile = spitter.spitImage(canvas, true);
+        System.out.println("Final image rendered: " + finalImageFile.toString());
+        return finalImageFile;
     }
 
     private static int averageColour(List<Point> neighbours, int[][] canvas) {
