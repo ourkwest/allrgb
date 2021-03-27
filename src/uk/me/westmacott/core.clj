@@ -1,7 +1,7 @@
 (ns uk.me.westmacott.core
   (:import [uk.me.westmacott Constants AvailablePointsByTargetColour ImageSpitter MountainsLettuceLightningSpace ColourSeries Echo ImageSpitter$DirectorySpitter]
            [java.awt Color Point Polygon]
-           [java.util Arrays Random]
+           [java.util Arrays Random Collections]
            [java.awt.geom Area]
            [java.lang Math$RandomNumberGeneratorHolder]))
 

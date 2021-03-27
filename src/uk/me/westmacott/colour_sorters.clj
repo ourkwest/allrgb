@@ -1,6 +1,8 @@
 (ns uk.me.westmacott.colour-sorters
   (:import [uk.me.westmacott ColourSeries Constants]
-           [java.awt Color]))
+           [java.awt Color]
+           [java.util Collections Random ArrayList Collection]
+           [java.lang Math$RandomNumberGeneratorHolder]))
 
 
 (def all-colours
@@ -14,6 +16,30 @@
 
 (defn by-brightness [ints]
   (sort-by (fn [i] (ColourSeries/getBrightness i)) ints))
+
+(defn offset-by [ints proportion]
+  (let [n (int (* proportion (count ints)))]
+    (concat (drop n ints) (take n ints))))
+
+(defn apply-to-bits [ints & sorters]
+  (let [n (count ints)
+        s (count sorters)
+        partition-length (int (Math/ceil (/ n s)))
+        partitions (partition-all partition-length ints)]
+    (apply concat (map #(%1 %2) sorters partitions))))
+
+(defn shuffled [coll]
+  (let [field (doto (.getDeclaredField Math$RandomNumberGeneratorHolder "randomNumberGenerator")
+                (.setAccessible true))
+        random ^Random (.get field nil)
+        list (ArrayList. ^Collection coll)]
+    (Collections/shuffle list random)
+    list))
+
+(defn safe [colour-integer]
+  (if (instance? Color colour-integer)
+    (int (bit-and (.getRGB ^Color colour-integer) 0xFFFFFF))
+    (int (bit-and colour-integer 0xFFFFFF))))
 
 (defn rgb-distance-squared [colour-a colour-b]
   (let [ra (bit-and 0xFF (bit-shift-right colour-a 16))

@@ -65,6 +65,8 @@ public class MountainsLettuceLightningSpace {
             canvas[bestPoint.x][bestPoint.y] = thisColour;
             echo.echo(canvas, bestPoint);
 
+//            System.out.println("bestPoint" + bestPoint);
+//            System.out.println("colour" + thisColour);
             for (Point neighbour : neighbourFinder.apply(bestPoint)) {
                 if (canvas[neighbour.x][neighbour.y] == UNSET) {
                     int currentAverage = targets[neighbour.x][neighbour.y];
