@@ -2,9 +2,10 @@
   (:require [uk.me.westmacott.core :as core]
             [uk.me.westmacott.colour-sorters :as colour-sorters]
             [clojure.java.io :as io]
-            [clojure.string :as string])
+            [clojure.string :as string]
+            [uk.me.westmacott.masking :as masking])
   (:import [uk.me.westmacott Constants ImageSpitter AvailablePointsByTargetColour]
-           [java.awt Color Graphics2D Image]
+           [java.awt Color Graphics2D Image BasicStroke]
            [javax.imageio ImageIO]
            [java.io File]
            [java.awt.image BufferedImage]
@@ -14,11 +15,6 @@
 ; no guide marks inside the cutting lines (can be on the cutting lines)
 
 (def fabric-width-cm 144)
-(def image-width 4000) ; could be bigger, smaller might hit quality limits on the printing.
-(def pixels-per-cm (/ image-width fabric-width-cm))
-(defn px [cm]
-  (* cm pixels-per-cm))
-
 (def seam-allowance-cm 1.5)
 (def skirt-length-cm 53)
 
@@ -26,6 +22,9 @@
 (def waist-sew-height-cm 5)
 (def waist-cut-height-cm 8)
 (def waist-bleed-height-cm 14)
+
+(def pattern-width-cm fabric-width-cm)
+(def pattern-height-cm (+ fabric-width-cm waist-bleed-height-cm))
 
 (def inner-sew-circumference-cm waist-circumference-cm)
 (def inner-sew-radius-cm (/ waist-circumference-cm Constants/TAU))
@@ -37,28 +36,35 @@
 (def outer-bleed-radius-cm (+ outer-cut-radius-cm seam-allowance-cm))
 (def outer-bleed-diameter-cm (* 2 outer-bleed-radius-cm))
 
-(println
-         inner-sew-circumference-cm
-         inner-cut-radius-cm
-         outer-cut-radius-cm
-         (float pixels-per-cm))
+(def outer-bleed-diameter-px 5000)
+(def pixels-per-cm (/ outer-bleed-diameter-px outer-bleed-diameter-cm))
+(defn px [cm]
+  (* cm pixels-per-cm))
+; could be bigger, smaller than 4000 might hit quality limits on the printing.
+(def image-width (px fabric-width-cm))
+(def initial-growth-height-factor 1)
+
+(println (str "Print on " pattern-width-cm " x " pattern-height-cm "\n Pixels / cm: " (float pixels-per-cm)))
 
 (defn skirt-spitter []
   (ImageSpitter/onceEvery (int 1000000) (ImageSpitter/forDirectory "skirt-renders")))
 
-(defn canvas-preparer [width height]
-  ; TODO: mask out some white areas
-  (let [x (int (* width 1/2))
-        y (int (* height 1/2))]
-    (fn [_canvas available]
-      (.add available Color/RED (+ x 100) (+ y 100))
-      (.add available Color/YELLOW (+ x 100) (- y 100))
-      (.add available Color/GREEN (- x 100) (- y 100))
-      (.add available Color/BLUE (- x 100) (+ y 100))
-      available)))
-
 (defn draw-circle [g x y r]
   (.drawArc g (- x r) (- y r) (* r 2) (* r 2) 0 360))
+
+(defn canvas-preparer [width height]
+  ; TODO: mask out some white areas?
+  (let [x (int (* width 1/2))
+        y (int (* height 1/2))]
+    (fn [canvas available]
+
+      (masking/with-masking-graphics [^Graphics2D g canvas]
+        (masking/set-masking g)
+        (.setStroke g (BasicStroke. 2)) ; so they don't jump through!
+        (draw-circle g x y (/ outer-bleed-diameter-px 2)))
+
+      (.add available Color/BLACK x y)
+      available)))
 
 (defn make-skirt-file [^File circle-render-file random-seed]
   (let [circle (ImageIO/read circle-render-file)
@@ -79,7 +85,9 @@
         y x]
 
     ;(.drawImage pattern-g circle -30 (- -695 (/ image-width 2)) nil)
-    (.drawImage pattern-g circle 0 (- (/ image-width 2)) nil)
+    (.drawImage pattern-g circle 0 (int (/ (- (* image-width initial-growth-height-factor)
+                                              image-width)
+                                           2)) nil)
 
     (let [waist-px (px waist-circumference-cm)
           inner-sew-radius-px (px inner-sew-radius-cm)
@@ -144,7 +152,7 @@
         (.setColor pattern-g Color/GREEN)
         (.drawLine pattern-g x y x y))
 
-      (doseq [[colour i] (map vector seed-colours (range))]
+      #_(doseq [[colour i] (map vector seed-colours (range))]
         (.setColor pattern-g colour)
         (.drawLine pattern-g (+ 100 i) 3 (+ 100 i) 3))
 
@@ -152,10 +160,10 @@
 
       pattern-file)))
 
-(defn render []
+(defn render [colour-offset]
   (let [width image-width
-        height (* 2 image-width)
-        ;colour-fn #(reverse (colour-sorters/by-hue colour-sorters/all-colours))
+        height (* initial-growth-height-factor image-width)
+        colour-fn #(reverse (colour-sorters/by-hue colour-sorters/all-colours))
         ;colours #(colour-sorters/shuffled colour-sorters/all-colours)
         ;colours #(colour-sorters/colours-closest-to Color/CYAN)
         ;colours #(interleave (colour-sorters/colours-closest-to Color/RED 1/4)
@@ -163,7 +171,7 @@
         ;                     (colour-sorters/colours-closest-to Color/GREEN 1/4)
         ;                     (colour-sorters/colours-closest-to Color/BLUE 1/4))
         ;colour-fn #(colour-sorters/colours-closest-to Color/CYAN)
-        colour-fn #(colour-sorters/offset-by (colour-sorters/by-hue colour-sorters/all-colours) 1/2)
+        colour-fn #(colour-sorters/offset-by (colour-sorters/by-hue colour-sorters/all-colours) colour-offset)
         canvas-prep (canvas-preparer width height)
         random-seed 1 ; there's no randomness in the prepare function
 
@@ -184,3 +192,8 @@
     ; read sewing line colours and use as seed for waistband
 
     ))
+
+(comment
+ (doseq [offset (range 0 1 1/8)]
+   (render offset))
+ )
